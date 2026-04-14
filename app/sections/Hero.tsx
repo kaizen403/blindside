@@ -53,25 +53,11 @@ export default function Hero() {
           style={{ y: heroTextY, opacity: heroTextOpacity }}
           className="flex flex-col items-center text-center mt-16 md:mt-24 px-4"
         >
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0 }}
-            className="glass-3d rounded-lg px-3 py-2 mb-6 flex items-center gap-2"
-          >
-            <span className="bg-white text-black rounded-md text-sm font-medium px-2 py-0.5">
-              AI Security
-            </span>
-            <span className="text-sm font-medium text-white/70">
-              Built for the age of AI, protect what you are building
-            </span>
-          </motion.div>
-
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-5xl md:text-7xl tracking-[-2px] font-medium leading-tight md:leading-[1.15] mb-3"
+            className="text-6xl md:text-[5.5rem] tracking-[-3px] font-medium leading-tight md:leading-[1.15] mb-3"
           >
             Protect your application from AI{" "}
             <span className="font-serif italic font-normal">threats</span>.
@@ -93,25 +79,18 @@ export default function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="flex flex-col sm:flex-row items-center gap-4"
           >
             <motion.button
               type="button"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.98 }}
-              className="bg-white text-black rounded-full px-8 py-3.5 text-base font-medium cursor-pointer"
+              className="bg-[var(--accent)] text-white rounded-full px-10 py-4 text-base font-semibold cursor-pointer hover:brightness-110 transition"
             >
               Get Protected for ₹999
             </motion.button>
-            <a
-              href="#how-it-works"
-              className="liquid-glass rounded-full px-8 py-3.5 text-base font-medium cursor-pointer hover:opacity-80 transition"
-            >
-              See How It Works
-            </a>
           </motion.div>
 
-          <p className="text-sm text-muted-foreground mt-4">
+          <p className="text-sm text-muted-foreground mt-6">
             Affordable security checks for startups, small businesses, and
             growing teams.
           </p>

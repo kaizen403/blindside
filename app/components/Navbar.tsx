@@ -58,7 +58,7 @@ export default function Navbar() {
         type="button"
         whileHover={{ scale: 1.03 }}
         whileTap={{ scale: 0.97 }}
-        className="bg-white text-black rounded-lg text-sm font-semibold px-4 py-2 hover:opacity-80 transition cursor-pointer"
+        className="bg-[var(--accent)] text-white rounded-lg text-sm font-semibold px-4 py-2 hover:brightness-110 transition cursor-pointer"
       >
         Get Protected
       </motion.button>

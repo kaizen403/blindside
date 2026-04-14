@@ -7,6 +7,7 @@
   --card: #111113;
   --border: rgba(255, 255, 255, 0.08);
   --hero-subtitle: #eef1f5;
+  --accent: #dc2626;
 }
 
 @theme inline {
@@ -15,6 +16,7 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-card: var(--card);
   --color-border: var(--border);
+  --color-accent: var(--accent);
   --font-sans: var(--font-anthropic-sans), system-ui, -apple-system, sans-serif;
   --font-serif: var(--font-instrument-serif), Georgia, serif;
 }

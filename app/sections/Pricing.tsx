@@ -12,7 +12,7 @@ export default function Pricing() {
     <section
       id="pricing"
       ref={sectionRef}
-      className="px-8 md:px-28 py-24 md:py-32"
+      className="px-8 md:px-28 py-32 md:py-44"
     >
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -36,7 +36,7 @@ export default function Pricing() {
         className="max-w-lg mx-auto"
       >
         <div className="liquid-glass rounded-2xl p-10 md:p-14 text-center">
-          <p className="text-5xl md:text-6xl font-bold mb-2">{"\u20B9"}999</p>
+          <p className="text-7xl md:text-8xl font-bold tracking-[-2px] mb-2">{"\u20B9"}999</p>
           <p className="text-lg text-muted-foreground mb-6">
             per security check
           </p>
@@ -57,7 +57,7 @@ export default function Pricing() {
             type="button"
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
-            className="bg-white text-black rounded-full px-8 py-3.5 text-base font-medium cursor-pointer hover:opacity-90 transition"
+            className="bg-[var(--accent)] text-white rounded-full px-10 py-4 text-base font-semibold cursor-pointer hover:brightness-110 transition"
           >
             Get Protected Now
           </motion.button>

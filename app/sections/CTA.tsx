@@ -43,23 +43,17 @@ export default function CTA() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.15 }}
-          className="flex flex-col sm:flex-row items-center gap-4 mb-6"
+          className="mb-6"
         >
           <motion.button
             type="button"
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            className="bg-foreground text-background rounded-full px-8 py-3.5 text-base font-medium cursor-pointer hover:opacity-90 transition"
+            className="bg-[var(--accent)] text-white rounded-full px-10 py-4 text-base font-semibold cursor-pointer hover:brightness-110 transition"
           >
             Protect My Application for ₹999
           </motion.button>
-          <a
-            href="#how-it-works"
-            className="liquid-glass rounded-full px-8 py-3.5 text-base font-medium cursor-pointer hover:opacity-80 transition"
-          >
-            See How It Works
-          </a>
         </motion.div>
 
         <motion.p
