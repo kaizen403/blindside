@@ -1,11 +1,21 @@
 import type { Metadata } from "next";
-import { Inter, Instrument_Serif } from "next/font/google";
+import { Instrument_Serif } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+const anthropicSans = localFont({
+  src: [
+    {
+      path: "./fonts/AnthropicSans-Roman.woff2",
+      style: "normal",
+    },
+    {
+      path: "./fonts/AnthropicSans-Italic.woff2",
+      style: "italic",
+    },
+  ],
+  variable: "--font-anthropic-sans",
+  display: "swap",
 });
 
 const instrumentSerif = Instrument_Serif({
@@ -29,7 +39,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${instrumentSerif.variable} antialiased`}
+      className={`${anthropicSans.variable} ${instrumentSerif.variable} antialiased`}
     >
       <body>{children}</body>
     </html>
