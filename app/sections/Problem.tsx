@@ -5,26 +5,26 @@ import { useRef, useState, useEffect } from "react";
 
 const ease = [0.22, 1, 0.36, 1] as [number, number, number, number];
 
-const centerNode = { x: 200, y: 200, label: "yourapp.com" };
+const centerNode = { x: 200, y: 200, label: "APP" };
 
 const satelliteNodes = [
-  { x: 200, y: 60, label: "/api/auth", vuln: "Weak auth" },
-  { x: 340, y: 130, label: "database", vuln: "SQLi" },
-  { x: 340, y: 270, label: "/config", vuln: "Leaked key" },
-  { x: 200, y: 340, label: "/users", vuln: "Exposed" },
-  { x: 60, y: 270, label: "/admin", vuln: "No ACL" },
-  { x: 60, y: 130, label: "API Keys", vuln: "Plaintext" },
+  { x: 200, y: 65, label: "AUTH", fullLabel: "/api/auth", vuln: "BYPASS" },
+  { x: 330, y: 140, label: "DB", fullLabel: "postgres:5432", vuln: "SQLi" },
+  { x: 330, y: 260, label: "ENV", fullLabel: ".env.prod", vuln: "LEAKED" },
+  { x: 200, y: 335, label: "USR", fullLabel: "/api/users", vuln: "IDOR" },
+  { x: 70, y: 260, label: "ADM", fullLabel: "/admin", vuln: "NO ACL" },
+  { x: 70, y: 140, label: "KEY", fullLabel: "api-keys", vuln: "PLAIN" },
 ] as const;
 
-const aiNode = { x: 370, y: 30 };
+const aiNode = { x: 360, y: 35 };
 
-const PHASE_DURATIONS = [1000, 1000, 2000, 2500, 1500, 1500, 500];
+const PHASE_DURATIONS = [1200, 800, 2000, 2500, 1500, 1500, 500];
 
 function getStatusText(phase: number): string {
-  if (phase <= 1) return "Initializing scan...";
-  if (phase === 2) return "Attacking 6 endpoints...";
-  if (phase === 3) return "Compromising targets...";
-  return "Full breach achieved · 847 paths · 0.4s";
+  if (phase <= 1) return "IDLE · AWAITING SCAN";
+  if (phase === 2) return "ACTIVE · 6 TARGETS";
+  if (phase === 3) return "CRITICAL · COMPROMISING";
+  return "COMPLETE · 2,847 VECTORS · 0.3s";
 }
 
 export default function Problem() {
@@ -50,6 +50,7 @@ export default function Problem() {
   const showBeams = phase >= 2 && phase <= 5;
   const showCompromise = phase >= 3 && phase <= 5;
   const isBreached = phase >= 4 && phase <= 5;
+  const underAttack = phase >= 2;
 
   const statusText = getStatusText(phase);
 
@@ -98,13 +99,29 @@ export default function Problem() {
           initial={{ opacity: 0, x: 20 }}
           animate={isInView ? { opacity: 1, x: 0 } : {}}
           transition={{ duration: 0.7, delay: 0.15, ease }}
-          className="liquid-glass rounded-2xl p-6 md:p-8"
+          className="rounded-2xl border border-white/[0.06] relative overflow-hidden p-6 md:p-8"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 50% 0%, rgba(255,255,255,0.02) 0%, transparent 60%)",
+          }}
         >
-          <div className="mb-4 flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
-            <span className="text-[10px] font-mono tracking-[0.2em] uppercase text-white/20">
-              Live Threat Simulation
-            </span>
+          <div
+            className="absolute inset-0 pointer-events-none opacity-30"
+            style={{
+              backgroundImage:
+                "radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)",
+              backgroundSize: "24px 24px",
+            }}
+          />
+
+          <div className="relative mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-1 h-1 rounded-full bg-white/15" />
+              <span className="text-[9px] font-mono tracking-[0.2em] uppercase text-white/15">
+                Threat Simulation
+              </span>
+            </div>
+            <span className="text-[9px] font-mono text-white/10">LIVE</span>
           </div>
 
           <svg
@@ -114,15 +131,34 @@ export default function Problem() {
             role="img"
             aria-label="Animated network breach simulation showing AI attacking application endpoints"
           >
+            <defs>
+              <filter
+                id="beam-glow"
+                x="-50%"
+                y="-50%"
+                width="200%"
+                height="200%"
+              >
+                <feGaussianBlur stdDeviation="3" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
+
             {satelliteNodes.map((node) => (
-              <line
+              <motion.line
                 key={`conn-${node.label}`}
                 x1={centerNode.x}
                 y1={centerNode.y}
                 x2={node.x}
                 y2={node.y}
-                stroke="rgba(255,255,255,0.06)"
-                strokeWidth={1}
+                stroke="rgba(255,255,255,0.05)"
+                strokeWidth={0.5}
+                strokeDasharray="4 4"
+                animate={underAttack ? { strokeDashoffset: [0, -8] } : {}}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
               />
             ))}
 
@@ -130,6 +166,7 @@ export default function Problem() {
               {showBeams && (
                 <motion.g
                   key={`beams-${loopKey}`}
+                  filter="url(#beam-glow)"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
@@ -139,8 +176,8 @@ export default function Problem() {
                     <motion.path
                       key={`beam-${node.label}`}
                       d={`M ${aiNode.x} ${aiNode.y} L ${node.x} ${node.y}`}
-                      stroke="rgba(6,182,212,0.6)"
-                      strokeWidth={1.5}
+                      stroke="rgba(255,255,255,0.2)"
+                      strokeWidth={1}
                       fill="none"
                       initial={{ pathLength: 0, opacity: 0 }}
                       animate={{ pathLength: 1, opacity: 1 }}
@@ -163,10 +200,10 @@ export default function Problem() {
                       cx={node.x}
                       cy={node.y}
                       fill="none"
-                      stroke="rgba(239,68,68,0.6)"
-                      strokeWidth={1}
+                      stroke="rgba(220,38,38,0.15)"
+                      strokeWidth={0.5}
                       initial={
-                        { r: 6, opacity: 0.8 } as {
+                        { r: 10, opacity: 0.6 } as {
                           r: number;
                           opacity: number;
                         }
@@ -186,20 +223,22 @@ export default function Problem() {
                   )}
                 </AnimatePresence>
 
-                <motion.circle
-                  cx={node.x}
-                  cy={node.y}
-                  r={6}
-                  strokeWidth={1}
+                <motion.rect
+                  x={node.x - 10}
+                  y={node.y - 10}
+                  width={20}
+                  height={20}
+                  rx={4}
+                  strokeWidth={0.5}
                   animate={{
                     fill:
                       phase >= 3
-                        ? "rgba(239,68,68,0.8)"
-                        : "rgba(255,255,255,0.15)",
+                        ? "rgba(220,38,38,0.12)"
+                        : "rgba(255,255,255,0.04)",
                     stroke:
                       phase >= 3
-                        ? "rgba(239,68,68,0.4)"
-                        : "rgba(255,255,255,0.2)",
+                        ? "rgba(220,38,38,0.3)"
+                        : "rgba(255,255,255,0.12)",
                   }}
                   transition={{
                     duration: 0.4,
@@ -209,12 +248,24 @@ export default function Problem() {
 
                 <text
                   x={node.x}
-                  y={node.y + 16}
-                  fontSize={9}
-                  fill="rgba(255,255,255,0.3)"
+                  y={node.y + 3}
+                  fontSize={8}
+                  fill="rgba(255,255,255,0.5)"
                   textAnchor="middle"
+                  fontFamily="monospace"
                 >
                   {node.label}
+                </text>
+
+                <text
+                  x={node.x}
+                  y={node.y + 22}
+                  fontSize={8}
+                  fill="rgba(255,255,255,0.15)"
+                  textAnchor="middle"
+                  fontFamily="monospace"
+                >
+                  {node.fullLabel}
                 </text>
 
                 <AnimatePresence>
@@ -222,10 +273,12 @@ export default function Problem() {
                     <motion.text
                       key={`vuln-${node.label}-${loopKey}`}
                       x={node.x}
-                      y={node.y + 26}
-                      fontSize={8}
-                      fill="rgba(239,68,68,0.7)"
+                      y={node.y + 32}
+                      fontSize={7}
+                      fill="rgba(220,38,38,0.5)"
                       textAnchor="middle"
+                      fontFamily="monospace"
+                      letterSpacing="0.1em"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
@@ -246,16 +299,16 @@ export default function Problem() {
                     cx={centerNode.x}
                     cy={centerNode.y}
                     fill="none"
-                    stroke="rgba(239,68,68,0.5)"
-                    strokeWidth={1.5}
+                    stroke="rgba(220,38,38,0.15)"
+                    strokeWidth={0.5}
                     initial={
-                      { r: 10, opacity: 0.8 } as {
+                      { r: 14, opacity: 0.6 } as {
                         r: number;
                         opacity: number;
                       }
                     }
                     animate={
-                      { r: 30, opacity: 0 } as {
+                      { r: 34, opacity: 0 } as {
                         r: number;
                         opacity: number;
                       }
@@ -265,32 +318,46 @@ export default function Problem() {
                 )}
               </AnimatePresence>
 
-              <motion.circle
-                cx={centerNode.x}
-                cy={centerNode.y}
-                r={10}
-                strokeWidth={1.5}
+              <motion.rect
+                x={centerNode.x - 14}
+                y={centerNode.y - 14}
+                width={28}
+                height={28}
+                rx={4}
+                strokeWidth={0.5}
                 animate={{
                   fill:
                     phase >= 4
-                      ? "rgba(239,68,68,0.9)"
-                      : "rgba(255,255,255,0.2)",
+                      ? "rgba(220,38,38,0.2)"
+                      : "rgba(255,255,255,0.04)",
                   stroke:
                     phase >= 4
-                      ? "rgba(239,68,68,0.5)"
-                      : "rgba(255,255,255,0.3)",
+                      ? "rgba(220,38,38,0.4)"
+                      : "rgba(255,255,255,0.12)",
                 }}
                 transition={{ duration: 0.4 }}
               />
 
               <text
                 x={centerNode.x}
-                y={centerNode.y + 22}
-                fontSize={9}
-                fill="rgba(255,255,255,0.3)"
+                y={centerNode.y + 3}
+                fontSize={8}
+                fill="rgba(255,255,255,0.5)"
                 textAnchor="middle"
+                fontFamily="monospace"
               >
                 {centerNode.label}
+              </text>
+
+              <text
+                x={centerNode.x}
+                y={centerNode.y + 24}
+                fontSize={8}
+                fill="rgba(255,255,255,0.15)"
+                textAnchor="middle"
+                fontFamily="monospace"
+              >
+                yourapp.com
               </text>
 
               <AnimatePresence>
@@ -299,17 +366,17 @@ export default function Problem() {
                     key={`breach-${loopKey}`}
                     x={200}
                     y={238}
-                    fontSize={11}
-                    fill="rgba(239,68,68,0.8)"
-                    fontWeight="600"
-                    letterSpacing="0.15em"
+                    fontSize={7}
+                    fill="rgba(220,38,38,0.4)"
+                    letterSpacing="0.2em"
                     textAnchor="middle"
+                    fontFamily="monospace"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.4 }}
                   >
-                    BREACH
+                    COMPROMISED
                   </motion.text>
                 )}
               </AnimatePresence>
@@ -318,38 +385,49 @@ export default function Problem() {
             <AnimatePresence>
               {showAI && (
                 <motion.g
-                  key={`ai-orb-${loopKey}`}
+                  key={`ai-node-${loopKey}`}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.5 }}
                 >
-                  <motion.circle
-                    cx={aiNode.x}
-                    cy={aiNode.y}
-                    r={16}
-                    fill="rgba(6,182,212,0.15)"
-                    animate={{ opacity: [0.3, 0.8, 0.3] }}
+                  <motion.rect
+                    x={aiNode.x - 12}
+                    y={aiNode.y - 12}
+                    width={24}
+                    height={24}
+                    rx={4}
+                    fill="rgba(255,255,255,0.06)"
+                    stroke="none"
+                    animate={{ opacity: [0.02, 0.06, 0.02] }}
                     transition={{
                       duration: 2,
                       repeat: Infinity,
                       ease: "easeInOut",
                     }}
                   />
-                  <circle
-                    cx={aiNode.x}
-                    cy={aiNode.y}
-                    r={8}
-                    fill="rgba(6,182,212,0.7)"
+
+                  <rect
+                    x={aiNode.x - 6}
+                    y={aiNode.y - 6}
+                    width={12}
+                    height={12}
+                    rx={1}
+                    fill="rgba(255,255,255,0.08)"
+                    stroke="rgba(255,255,255,0.2)"
+                    strokeWidth={0.5}
+                    transform={`rotate(45, ${aiNode.x}, ${aiNode.y})`}
                   />
+
                   <text
-                    x={aiNode.x - 18}
-                    y={aiNode.y + 4}
-                    fontSize={9}
-                    fill="rgba(6,182,212,0.8)"
+                    x={aiNode.x}
+                    y={aiNode.y + 18}
+                    fontSize={7}
+                    fill="rgba(255,255,255,0.25)"
                     textAnchor="middle"
+                    fontFamily="monospace"
                   >
-                    AI
+                    SCANNER
                   </text>
                 </motion.g>
               )}
@@ -361,31 +439,40 @@ export default function Problem() {
                   key={`counter-${loopKey}`}
                   x={200}
                   y={390}
-                  fontSize={10}
-                  fill="rgba(255,255,255,0.25)"
+                  fontSize={8}
+                  fill="rgba(255,255,255,0.12)"
                   textAnchor="middle"
+                  fontFamily="monospace"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.4, delay: 0.2 }}
                 >
-                  847 paths · 0.4s
+                  2,847 vectors · 0.3s elapsed
                 </motion.text>
               )}
             </AnimatePresence>
           </svg>
 
-          <div className="mt-4 flex items-center gap-2">
-            <motion.div
-              className={`w-1.5 h-1.5 rounded-full ${
-                isBreached ? "bg-red-400/60" : "bg-emerald-400/40"
-              }`}
-              animate={{ opacity: [0.4, 1, 0.4] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            />
-            <span className="text-[10px] font-mono text-white/30 tracking-wide">
-              {statusText}
-            </span>
+          <div className="relative mt-4 pt-3 border-t border-white/[0.04]">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <motion.div
+                  className="w-1 h-1 rounded-full"
+                  style={{
+                    backgroundColor: isBreached
+                      ? "rgba(220,38,38,0.5)"
+                      : "rgba(255,255,255,0.2)",
+                  }}
+                  animate={{ opacity: [0.3, 1, 0.3] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
+                <span className="text-[9px] font-mono text-white/15 tracking-wider">
+                  {statusText}
+                </span>
+              </div>
+              <span className="text-[9px] font-mono text-white/10">v2.4.1</span>
+            </div>
           </div>
         </motion.div>
       </div>
