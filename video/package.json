@@ -1,0 +1,30 @@
+{
+  "name": "blindside-video",
+  "version": "1.0.0",
+  "private": true,
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  },
+  "scripts": {
+    "studio": "remotion studio",
+    "render": "remotion render SimultaneousBreach out/breach.mp4 --codec=h264",
+    "render-solution": "remotion render SolutionVideo out/solution-scan.mp4 --codec=h264",
+    "render-shield": "remotion render TheShield out/shield.mp4 --codec=h264"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.0",
+    "@remotion/fonts": "^4.0.0",
+    "@remotion/google-fonts": "^4.0.0",
+    "@remotion/paths": "^4.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "remotion": "^4.0.0",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "typescript": "^5.0.0"
+  }
+}
