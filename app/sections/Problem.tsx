@@ -1,82 +1,168 @@
 "use client";
 
-import { motion, useInView } from "framer-motion";
-import { useRef, useState, useEffect } from "react";
+import { motion, useInView, AnimatePresence } from "framer-motion";
+import { useRef, useState, useEffect, useCallback } from "react";
 
 const ease = [0.22, 1, 0.36, 1] as [number, number, number, number];
 
-const targets = [
-  { endpoint: "/api/auth", vuln: "Weak Authentication", severity: "critical" },
-  { endpoint: "/api/users", vuln: "IDOR Detected", severity: "critical" },
-  { endpoint: "/admin", vuln: "Missing Access Control", severity: "critical" },
-  { endpoint: "postgres:5432", vuln: "SQL Injection", severity: "high" },
-  { endpoint: ".env.prod", vuln: "Secrets Exposed", severity: "high" },
-  { endpoint: "api-keys", vuln: "Plaintext Storage", severity: "medium" },
-] as const;
+type LogEntry = {
+  id: number;
+  type: "scan" | "found" | "breach" | "status" | "prompt";
+  text: string;
+  detail?: string;
+  severity?: "critical" | "high" | "medium";
+};
 
-type ScanPhase = "idle" | "scanning" | "found" | "complete";
+const ATTACK_SEQUENCE: { delay: number; entry: Omit<LogEntry, "id"> }[] = [
+  { delay: 500, entry: { type: "prompt", text: "blindside-agent --target yourapp.com --mode full-auto" } },
+  { delay: 600, entry: { type: "status", text: "[init] loading model gpt-4o … ready" } },
+  { delay: 350, entry: { type: "status", text: "[recon] enumerating endpoints … 2,847 paths found" } },
+  { delay: 400, entry: { type: "scan", text: "[scan] POST /api/auth → testing auth bypass" } },
+  { delay: 700, entry: { type: "found", text: "[VULN] /api/auth — JWT secret brute-forced in 0.04s", severity: "critical" } },
+  { delay: 200, entry: { type: "scan", text: "[scan] GET /api/users/:id → testing IDOR" } },
+  { delay: 500, entry: { type: "found", text: "[VULN] /api/users/1 — IDOR: all user records exposed", severity: "critical" } },
+  { delay: 150, entry: { type: "scan", text: "[scan] GET /admin → testing access control" } },
+  { delay: 400, entry: { type: "found", text: "[VULN] /admin — no authentication required", severity: "critical" } },
+  { delay: 200, entry: { type: "scan", text: "[scan] SELECT * FROM users → testing SQLi" } },
+  { delay: 650, entry: { type: "found", text: "[VULN] postgres:5432 — SQLi: database dumped (4.2GB)", severity: "high" } },
+  { delay: 100, entry: { type: "scan", text: "[scan] GET /.env.prod → checking exposed files" } },
+  { delay: 300, entry: { type: "found", text: "[VULN] .env.prod — AWS_SECRET_KEY + DB creds leaked", severity: "high" } },
+  { delay: 150, entry: { type: "scan", text: "[scan] GET /api/keys → checking key storage" } },
+  { delay: 400, entry: { type: "found", text: "[VULN] api-keys — stored plaintext in localStorage", severity: "medium" } },
+  { delay: 600, entry: { type: "status", text: "[done] scan complete in 0.3s" } },
+  { delay: 300, entry: { type: "breach", text: "⣿ COMPROMISED — 6 vulns found across 2,847 attack paths" } },
+];
 
-function getPhaseForTarget(
-  globalPhase: number,
-  targetIndex: number,
-): ScanPhase {
-  if (globalPhase === 0) return "idle";
-  if (globalPhase === 1) {
-    return targetIndex <= 1 ? "scanning" : "idle";
-  }
-  if (globalPhase === 2) {
-    if (targetIndex <= 1) return "found";
-    if (targetIndex <= 3) return "scanning";
-    return "idle";
-  }
-  if (globalPhase === 3) {
-    if (targetIndex <= 3) return "found";
-    if (targetIndex <= 5) return "scanning";
-    return "idle";
-  }
-  return "found";
+function useCyclingLog(isActive: boolean) {
+  const [entries, setEntries] = useState<LogEntry[]>([]);
+  const [vulnCount, setVulnCount] = useState(0);
+  const idRef = useRef(0);
+  const pendingTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  const clearAllTimers = useCallback(() => {
+    pendingTimers.current.forEach(clearTimeout);
+    pendingTimers.current = [];
+  }, []);
+
+  const runSequence = useCallback(() => {
+    clearAllTimers();
+    let accumulated = 0;
+    ATTACK_SEQUENCE.forEach(({ delay, entry }) => {
+      accumulated += delay;
+      const t = setTimeout(() => {
+        const id = idRef.current++;
+        setEntries((prev) => [...prev.slice(-14), { ...entry, id }]);
+        if (entry.type === "found") setVulnCount((c) => c + 1);
+        if (entry.type === "breach") {
+          const restart = setTimeout(() => {
+            setEntries([]);
+            setVulnCount(0);
+            runSequence();
+          }, 3500);
+          pendingTimers.current.push(restart);
+        }
+      }, accumulated);
+      pendingTimers.current.push(t);
+    });
+  }, [clearAllTimers]);
+
+  useEffect(() => {
+    if (!isActive) return;
+    runSequence();
+    return clearAllTimers;
+  }, [isActive, runSequence, clearAllTimers]);
+
+  return { entries, vulnCount };
 }
 
-function getProgress(phase: number): number {
-  if (phase === 0) return 0;
-  if (phase === 1) return 18;
-  if (phase === 2) return 45;
-  if (phase === 3) return 72;
-  return 100;
+const SEVERITY_COLOR: Record<string, string> = {
+  critical: "#ff5f56",
+  high: "#ffbd2e",
+  medium: "#8a8a8a",
+};
+
+function LogLine({ entry }: { entry: LogEntry }) {
+  const isFound = entry.type === "found";
+  const isBreach = entry.type === "breach";
+  const isScan = entry.type === "scan";
+  const isPrompt = entry.type === "prompt";
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.15, ease }}
+      className="font-mono leading-relaxed whitespace-nowrap"
+      style={{ fontSize: 12.5 }}
+    >
+      {isPrompt ? (
+        <span>
+          <span style={{ color: "#a0d468" }}>❯</span>
+          <span style={{ color: "#c8c8c8" }}> {entry.text}</span>
+        </span>
+      ) : isBreach ? (
+        <span
+          style={{ color: "#ff5f56", fontWeight: 600 }}
+        >
+          {entry.text}
+        </span>
+      ) : isFound ? (
+        <span>
+          <span style={{ color: SEVERITY_COLOR[entry.severity ?? "medium"] }}>
+            {entry.text}
+          </span>
+          {entry.severity && (
+            <span
+              style={{
+                color: "#000",
+                backgroundColor: SEVERITY_COLOR[entry.severity],
+                padding: "0 4px",
+                marginLeft: 8,
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: "0.04em",
+                borderRadius: 2,
+              }}
+            >
+              {entry.severity.toUpperCase()}
+            </span>
+          )}
+        </span>
+      ) : isScan ? (
+        <span style={{ color: "#6a6a6a" }}>{entry.text}</span>
+      ) : (
+        <span style={{ color: "#888" }}>{entry.text}</span>
+      )}
+    </motion.div>
+  );
 }
 
-function getStatusText(phase: number): string {
-  if (phase === 0) return "Initializing...";
-  if (phase <= 3) return "Scanning endpoints...";
-  return "Scan complete";
-}
-
-function getVulnCount(phase: number): number {
-  if (phase === 0) return 0;
-  if (phase === 1) return 0;
-  if (phase === 2) return 2;
-  if (phase === 3) return 4;
-  return 6;
+function BlinkingCursor() {
+  return (
+    <motion.span
+      className="inline-block font-mono"
+      style={{ color: "#a0d468", fontSize: 12.5 }}
+      animate={{ opacity: [1, 0] }}
+      transition={{ duration: 0.7, repeat: Infinity, ease: "linear" }}
+    >
+      ❯ █
+    </motion.span>
+  );
 }
 
 export default function Problem() {
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-80px" });
-
-  const [phase, setPhase] = useState(0);
+  const { entries, vulnCount } = useCyclingLog(isInView);
+  const logContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!isInView) return;
-    const durations = [1200, 1800, 1800, 1800, 3000, 500];
-    const timeout = setTimeout(() => {
-      setPhase((prev) => (prev + 1) % 6);
-    }, durations[phase]);
-    return () => clearTimeout(timeout);
-  }, [isInView, phase]);
+    if (entries.length > 0 && logContainerRef.current) {
+      logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
+    }
+  }, [entries]);
 
-  const progress = getProgress(phase);
-  const vulnCount = getVulnCount(phase);
-  const isComplete = phase >= 4;
+  const hasBreach = entries.some((e) => e.type === "breach");
 
   return (
     <section
@@ -123,222 +209,76 @@ export default function Problem() {
           initial={{ opacity: 0, x: 20 }}
           animate={isInView ? { opacity: 1, x: 0 } : {}}
           transition={{ duration: 0.7, delay: 0.15, ease }}
-          className="rounded-2xl border border-white/[0.06] overflow-hidden"
+          className="rounded-lg overflow-hidden"
           style={{
-            backgroundImage:
-              "radial-gradient(circle at 50% 0%, rgba(255,255,255,0.02) 0%, transparent 60%)",
+            backgroundColor: "#0c0c0c",
+            border: "1px solid #2a2a2a",
+            boxShadow: "0 25px 60px -12px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03)",
           }}
         >
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/[0.06]">
-            <div className="flex items-center gap-2.5">
-              <motion.div
-                className="w-2 h-2 rounded-full"
-                style={{
-                  backgroundColor: isComplete
-                    ? "rgba(239,68,68,0.7)"
-                    : "rgba(255,255,255,0.25)",
-                }}
-                animate={{ opacity: [0.4, 1, 0.4] }}
-                transition={{
-                  duration: isComplete ? 1 : 2,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-              />
-              <span className="text-xs font-mono text-white/40 tracking-wide">
-                AI Threat Scanner
+          <div
+            className="flex items-center gap-2 px-4 py-2.5"
+            style={{
+              backgroundColor: "#1a1a1a",
+              borderBottom: "1px solid #2a2a2a",
+            }}
+          >
+            <div className="flex items-center gap-[7px]">
+              <div className="w-[11px] h-[11px] rounded-full" style={{ backgroundColor: "#ff5f56" }} />
+              <div className="w-[11px] h-[11px] rounded-full" style={{ backgroundColor: "#ffbd2e" }} />
+              <div className="w-[11px] h-[11px] rounded-full" style={{ backgroundColor: "#27c93f" }} />
+            </div>
+            <div className="flex-1 text-center">
+              <span className="font-mono text-[11px]" style={{ color: "#666" }}>
+                blindside-agent — zsh — 80×24
               </span>
             </div>
-            <span className="text-[10px] font-mono text-white/20">
-              {isComplete ? "6 FOUND" : "SCANNING"}
-            </span>
+            <div className="flex items-center gap-2.5">
+              {vulnCount > 0 && (
+                <motion.span
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="font-mono text-[11px] font-semibold"
+                  style={{ color: "#ff5f56" }}
+                >
+                  {vulnCount} VULN{vulnCount !== 1 ? "S" : ""}
+                </motion.span>
+              )}
+            </div>
           </div>
 
-          <div className="px-5 py-5">
-            <div className="mb-5">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-white/60">yourapp.com</span>
-                <span className="text-xs font-mono text-white/25">
-                  {progress}%
-                </span>
-              </div>
-              <div className="h-1 rounded-full bg-white/[0.06] overflow-hidden">
-                <motion.div
-                  className="h-full rounded-full"
-                  style={{
-                    backgroundColor: isComplete
-                      ? "rgba(239,68,68,0.5)"
-                      : "rgba(255,255,255,0.2)",
-                  }}
-                  animate={{ width: `${progress}%` }}
-                  transition={{ duration: 0.8, ease }}
-                />
-              </div>
-            </div>
+          <div
+            ref={logContainerRef}
+            className="px-4 py-3 h-[340px] overflow-y-auto overflow-x-hidden scrollbar-none"
+            style={{ backgroundColor: "#0c0c0c" }}
+          >
+            <AnimatePresence mode="popLayout">
+              {entries.map((entry) => (
+                <LogLine key={entry.id} entry={entry} />
+              ))}
+            </AnimatePresence>
+            {!hasBreach && <BlinkingCursor />}
+          </div>
 
-            <div className="flex flex-col gap-0.5">
-              {targets.map((target, i) => {
-                const targetPhase = getPhaseForTarget(phase, i);
-                return (
-                  <motion.div
-                    key={target.endpoint}
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={isInView ? { opacity: 1, x: 0 } : {}}
-                    transition={{ duration: 0.4, delay: 0.3 + i * 0.06, ease }}
-                    className="flex items-center justify-between py-2 px-3 rounded-lg transition-colors duration-500"
-                    style={{
-                      backgroundColor:
-                        targetPhase === "found"
-                          ? "rgba(239,68,68,0.06)"
-                          : "transparent",
-                    }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="relative w-4 h-4 flex items-center justify-center shrink-0">
-                        {targetPhase === "idle" && (
-                          <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
-                        )}
-                        {targetPhase === "scanning" && (
-                          <motion.div
-                            className="w-1.5 h-1.5 rounded-full bg-white/30"
-                            animate={{ opacity: [0.2, 1, 0.2] }}
-                            transition={{
-                              duration: 0.8,
-                              repeat: Infinity,
-                              ease: "easeInOut",
-                            }}
-                          />
-                        )}
-                        {targetPhase === "found" && (
-                          <motion.div
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{ duration: 0.3, ease }}
-                          >
-                            <svg
-                              width="14"
-                              height="14"
-                              viewBox="0 0 14 14"
-                              fill="none"
-                              role="img"
-                              aria-label="Vulnerability found"
-                            >
-                              <circle
-                                cx="7"
-                                cy="7"
-                                r="6"
-                                stroke="rgba(239,68,68,0.4)"
-                                strokeWidth="1"
-                              />
-                              <path
-                                d="M4.5 7L6.5 9L9.5 5"
-                                stroke="rgba(239,68,68,0.7)"
-                                strokeWidth="1.2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                            </svg>
-                          </motion.div>
-                        )}
-                      </div>
-
-                      <span
-                        className="text-sm font-mono transition-colors duration-500"
-                        style={{
-                          color:
-                            targetPhase === "found"
-                              ? "rgba(255,255,255,0.7)"
-                              : "rgba(255,255,255,0.3)",
-                        }}
-                      >
-                        {target.endpoint}
-                      </span>
-                    </div>
-
-                    <div className="text-right">
-                      {targetPhase === "idle" && (
-                        <span className="text-[11px] font-mono text-white/10">
-                          Queued
-                        </span>
-                      )}
-                      {targetPhase === "scanning" && (
-                        <motion.span
-                          className="text-[11px] font-mono text-white/25"
-                          animate={{ opacity: [0.3, 1, 0.3] }}
-                          transition={{
-                            duration: 1,
-                            repeat: Infinity,
-                            ease: "easeInOut",
-                          }}
-                        >
-                          Scanning...
-                        </motion.span>
-                      )}
-                      {targetPhase === "found" && (
-                        <motion.span
-                          className="text-[11px] font-mono text-red-400/60"
-                          initial={{ opacity: 0, x: 4 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.3 }}
-                        >
-                          {target.vuln}
-                        </motion.span>
-                      )}
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-
-            <motion.div
-              className="mt-5 pt-4 border-t border-white/[0.04]"
-              animate={{ opacity: vulnCount > 0 ? 1 : 0.3 }}
-              transition={{ duration: 0.5 }}
+          <div
+            className="px-4 py-2 flex items-center justify-between"
+            style={{
+              backgroundColor: hasBreach ? "#1c0a0a" : "#1a1a1a",
+              borderTop: `1px solid ${hasBreach ? "#3a1515" : "#2a2a2a"}`,
+              transition: "background-color 0.5s, border-color 0.5s",
+            }}
+          >
+            <span
+              className="font-mono text-[11px]"
+              style={{ color: hasBreach ? "#ff5f56" : "#444" }}
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div>
-                    <p className="text-xs text-white/20 mb-0.5">
-                      Vulnerabilities
-                    </p>
-                    <p
-                      className="text-lg font-mono font-medium transition-colors duration-500"
-                      style={{
-                        color:
-                          vulnCount > 0
-                            ? "rgba(239,68,68,0.7)"
-                            : "rgba(255,255,255,0.15)",
-                      }}
-                    >
-                      {vulnCount}
-                    </p>
-                  </div>
-                  <div className="w-px h-8 bg-white/[0.04]" />
-                  <div>
-                    <p className="text-xs text-white/20 mb-0.5">
-                      Paths tested
-                    </p>
-                    <p className="text-lg font-mono font-medium text-white/30">
-                      {isComplete ? "2,847" : phase >= 2 ? "1,204" : "—"}
-                    </p>
-                  </div>
-                  <div className="w-px h-8 bg-white/[0.04]" />
-                  <div>
-                    <p className="text-xs text-white/20 mb-0.5">Time</p>
-                    <p className="text-lg font-mono font-medium text-white/30">
-                      {isComplete ? "0.3s" : phase >= 1 ? "..." : "—"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-
-          <div className="px-5 py-3 border-t border-white/[0.04] flex items-center justify-between">
-            <span className="text-[10px] font-mono text-white/15">
-              {getStatusText(phase)}
+              {hasBreach
+                ? "yourapp.com compromised"
+                : entries.length > 0
+                  ? "scanning…"
+                  : "ready"}
             </span>
-            <span className="text-[10px] font-mono text-white/10">
+            <span className="font-mono text-[10px]" style={{ color: "#333" }}>
               blind-side v2.4
             </span>
           </div>
