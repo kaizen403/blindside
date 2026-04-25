@@ -1,0 +1,305 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String    @id
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  role          Role      @default(CLIENT)
+  orgId         String?
+  org           Org?      @relation(fields: [orgId], references: [id], onDelete: SetNull)
+
+  sessions         Session[]
+  accounts         Account[]
+  notifications    Notification[]
+  activityEvents   ActivityEvent[]
+  auditLogs        AuditLog[]
+  authoredFindings Finding[]      @relation("FindingAuthor")
+  stageEventsActed StageEvent[]   @relation("StageEventActor")
+
+  @@map("user")
+}
+
+enum Role {
+  ADMIN
+  ANALYST
+  CLIENT
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@unique([accountId, providerId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([identifier, value])
+  @@map("verification")
+}
+
+model Org {
+  id          String       @id @default(cuid())
+  name        String
+  slug        String       @unique
+  logoUrl     String?
+  users       User[]
+  engagements Engagement[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Engagement {
+  id            String           @id @default(cuid())
+  orgId         String
+  org           Org              @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  name          String
+  scopeSummary  String?
+  startDate     DateTime
+  targetEndDate DateTime?
+  endedAt       DateTime?
+  currentStage  Stage            @default(SCOPING)
+  status        EngagementStatus @default(ACTIVE)
+  stages        StageEvent[]
+  findings      Finding[]
+  assets        Asset[]
+  activity      ActivityEvent[]
+  reports       Report[]
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+}
+
+enum Stage {
+  SCOPING
+  RECON
+  SCANNING
+  EXPLOITATION
+  REPORTING
+  REMEDIATION
+}
+
+enum EngagementStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ARCHIVED
+}
+
+model StageEvent {
+  id           String     @id @default(cuid())
+  engagementId String
+  engagement   Engagement @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+  stage        Stage
+  state        StageState
+  startedAt    DateTime?
+  completedAt  DateTime?
+  note         String?
+  actorId      String?
+  actor        User?      @relation("StageEventActor", fields: [actorId], references: [id], onDelete: SetNull)
+  createdAt    DateTime   @default(now())
+}
+
+enum StageState {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  SKIPPED
+}
+
+model Asset {
+  id           String     @id @default(cuid())
+  engagementId String
+  engagement   Engagement @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+  name         String
+  type         AssetType
+  url          String?
+  inScope      Boolean    @default(true)
+  notes        String?
+  findings     Finding[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+enum AssetType {
+  WEB
+  API
+  MOBILE
+  NETWORK
+  CLOUD
+  IOT
+  OTHER
+}
+
+model Finding {
+  id           String        @id @default(cuid())
+  engagementId String
+  engagement   Engagement    @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+  assetId      String?
+  asset        Asset?        @relation(fields: [assetId], references: [id], onDelete: SetNull)
+  title        String
+  slug         String
+  severity     Severity
+  cvssVector   String?
+  cvssScore    Float?
+  category     String
+  cweId        String?
+  status       FindingStatus @default(OPEN)
+  bodyMarkdown String
+  bodyHtml     String
+  remediation  String
+  refs         String[]
+  evidence     Evidence[]
+  discoveredAt DateTime
+  resolvedAt   DateTime?
+  authorId     String
+  author       User          @relation("FindingAuthor", fields: [authorId], references: [id])
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@unique([engagementId, slug])
+}
+
+enum Severity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+  INFO
+}
+
+enum FindingStatus {
+  OPEN
+  ACKNOWLEDGED
+  IN_PROGRESS
+  RESOLVED
+  RISK_ACCEPTED
+  FALSE_POSITIVE
+}
+
+model Evidence {
+  id        String       @id @default(cuid())
+  findingId String
+  finding   Finding      @relation(fields: [findingId], references: [id], onDelete: Cascade)
+  kind      EvidenceKind
+  caption   String?
+  url       String
+  createdAt DateTime     @default(now())
+}
+
+enum EvidenceKind {
+  IMAGE
+  REQUEST
+  RESPONSE
+  LOG
+  FILE
+}
+
+model ActivityEvent {
+  id              String       @id @default(cuid())
+  engagementId    String
+  engagement      Engagement   @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+  type            ActivityType
+  payload         Json
+  actorId         String?
+  actor           User?        @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  visibleToClient Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+
+  @@index([engagementId, createdAt])
+}
+
+enum ActivityType {
+  ENGAGEMENT_CREATED
+  STAGE_STARTED
+  STAGE_COMPLETED
+  FINDING_PUBLISHED
+  FINDING_UPDATED
+  FINDING_RESOLVED
+  ASSET_ADDED
+  REPORT_PUBLISHED
+  COMMENT_ADDED
+}
+
+model Report {
+  id           String     @id @default(cuid())
+  engagementId String
+  engagement   Engagement @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+  version      Int
+  pdfUrl       String?
+  publishedAt  DateTime?
+  createdAt    DateTime   @default(now())
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  body      String?
+  href      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, readAt])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  actor     User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  action    String
+  entity    String
+  entityId  String
+  diff      Json?
+  ip        String?
+  ua        String?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
