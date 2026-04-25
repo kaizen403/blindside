@@ -11,7 +11,8 @@
     "studio": "remotion studio",
     "render": "remotion render SimultaneousBreach out/breach.mp4 --codec=h264",
     "render-solution": "remotion render SolutionVideo out/solution-scan.mp4 --codec=h264",
-    "render-shield": "remotion render TheShield out/shield.mp4 --codec=h264"
+    "render-shield": "remotion render TheShield out/shield.mp4 --codec=h264",
+    "render-action": "remotion render TakeAction out/take-action.mp4 --codec=h264"
   },
   "dependencies": {
     "@remotion/cli": "^4.0.0",
