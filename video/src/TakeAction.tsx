@@ -209,7 +209,7 @@ export const TakeAction: React.FC = () => {
                   fontWeight={500}
                   letterSpacing={-0.5}
                 >
-                  Blind Side helps you take action
+                  Blindwall helps you take action
                 </text>
                 <text
                   x={400}

@@ -221,7 +221,7 @@ export async function inviteClientUserAction(orgId: string, email: string, name:
   const baseUrl = process.env.BETTER_AUTH_URL || "http://localhost:3000";
   await sendEmail({
     to: trimmedEmail,
-    subject: `You're invited to ${org.name} on Blind Side`,
+    subject: `You're invited to ${org.name} on Blindwall`,
     html: inviteEmail(org.name, `${baseUrl}/login`),
   });
 

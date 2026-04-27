@@ -6,7 +6,7 @@ import { sendEmail, magicLinkEmail, verifyEmail } from "./email";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: "postgresql" }),
-  appName: "Blind Side",
+  appName: "Blindwall",
   baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
   basePath: "/api/auth",
   secret: process.env.BETTER_AUTH_SECRET,
@@ -36,7 +36,7 @@ export const auth = betterAuth({
 
   emailVerification: {
     sendVerificationEmail: async ({ user, url }) => {
-      await sendEmail({ to: user.email, subject: "Verify your Blind Side email", html: verifyEmail(url) });
+      await sendEmail({ to: user.email, subject: "Verify your Blindwall email", html: verifyEmail(url) });
     },
     sendOnSignUp: false,
     autoSignInAfterVerification: true,
@@ -46,7 +46,7 @@ export const auth = betterAuth({
   plugins: [
     magicLink({
       sendMagicLink: async ({ email, url }) => {
-        await sendEmail({ to: email, subject: "Your Blind Side sign-in link", html: magicLinkEmail(url) });
+        await sendEmail({ to: email, subject: "Your Blindwall sign-in link", html: magicLinkEmail(url) });
       },
       expiresIn: 600,
     }),

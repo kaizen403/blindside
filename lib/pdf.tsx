@@ -56,7 +56,7 @@ function ReportDoc(input: PdfReportInput) {
     <Document>
       <Page size="A4" style={styles.cover}>
         <View>
-          <Text style={styles.brand}>BLIND SIDE</Text>
+          <Text style={styles.brand}>BLINDWALL</Text>
           <Text style={styles.title}>{input.engagementName}</Text>
           <Text style={styles.subtitle}>Penetration testing report</Text>
         </View>
@@ -129,7 +129,7 @@ function ReportDoc(input: PdfReportInput) {
         <Text
           style={styles.footer}
           render={({ pageNumber, totalPages }) =>
-            `Blind Side · ${input.engagementName} · ${pageNumber} / ${totalPages}`
+            `Blindwall · ${input.engagementName} · ${pageNumber} / ${totalPages}`
           }
           fixed
         />

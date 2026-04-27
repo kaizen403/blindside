@@ -27,9 +27,9 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "Blind Side - Protect Your Application from AI Threats",
+  title: "Blindwall - Protect Your Application from AI Threats",
   description:
-    "AI is making cyberattacks faster, smarter, and more scalable. Blind Side helps you identify vulnerabilities in your website, app, or infrastructure before they can be exploited.",
+    "AI is making cyberattacks faster, smarter, and more scalable. Blindwall helps you identify vulnerabilities in your website, app, or infrastructure before they can be exploited.",
 };
 
 export default function RootLayout({

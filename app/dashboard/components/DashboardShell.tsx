@@ -24,7 +24,7 @@ export function DashboardShell({
     <div className="min-h-screen bg-[color:var(--background)]">
       <aside className="fixed left-0 top-0 bottom-0 w-[240px] border-r border-[color:var(--border)] bg-[color:var(--background)] flex flex-col">
         <div className="h-16 flex items-center px-6 border-b border-[color:var(--border)]">
-          <Link href="/" className="font-serif text-lg tracking-tight">Blind Side</Link>
+          <Link href="/" className="font-serif text-lg tracking-tight">Blindwall</Link>
         </div>
         <nav className="flex-1 px-3 py-6 space-y-1">
           {nav.map((item) => (

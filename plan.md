@@ -1,4 +1,4 @@
-# Blind Side — Dashboards Plan
+# Blindwall — Dashboards Plan
 
 > Admin and Client dashboards for delivering pentest engagements end-to-end.
 > One source of truth: admin writes Markdown findings, clients see analytics, timelines, and remediation tracking.
@@ -671,7 +671,7 @@ DIRECT_URL=                   # Neon direct (for migrations)
 BETTER_AUTH_SECRET=
 BETTER_AUTH_URL=
 RESEND_API_KEY=
-EMAIL_FROM="Blind Side <reports@blindside.app>"
+EMAIL_FROM="Blindwall <reports@blindwall.app>"
 R2_ACCOUNT_ID=
 R2_ACCESS_KEY_ID=
 R2_SECRET_ACCESS_KEY=

@@ -77,7 +77,7 @@ function LoginForm() {
 
       <div className="mt-8 pt-6 border-t border-white/[0.06] text-xs text-[color:var(--muted-foreground)] space-y-1">
         <div>Seed credentials:</div>
-        <div className="font-mono">admin@blindside.local / Admin@123456</div>
+        <div className="font-mono">admin@blindwall.local / Admin@123456</div>
         <div className="font-mono">ceo@acme.local / Client@123456</div>
       </div>
     </motion.form>
@@ -89,7 +89,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden">
       <div className="absolute inset-0 -z-10 built-for-orb" aria-hidden />
       <div className="absolute top-6 left-6 z-10">
-        <Link href="/" className="font-serif text-lg tracking-tight">Blind Side</Link>
+        <Link href="/" className="font-serif text-lg tracking-tight">Blindwall</Link>
       </div>
       <Suspense fallback={null}>
         <LoginForm />

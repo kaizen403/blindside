@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-echo "🚀 Bootstrapping Blind Side..."
+echo "🚀 Bootstrapping Blindwall..."
 docker compose up -d
 echo "⏳ Waiting for Postgres..."
 for i in {1..30}; do

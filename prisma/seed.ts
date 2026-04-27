@@ -24,11 +24,11 @@ async function signUpOrGet(email: string, password: string, name: string) {
 }
 
 async function main() {
-  console.log("🌱 Seeding Blind Side...");
+  console.log("🌱 Seeding Blindwall...");
 
   // --- Users ---
-  const admin = await signUpOrGet("admin@blindside.local", "Admin@123456", "Admin User");
-  const analyst = await signUpOrGet("analyst@blindside.local", "Analyst@123456", "Ada Analyst");
+  const admin = await signUpOrGet("admin@blindwall.local", "Admin@123456", "Admin User");
+  const analyst = await signUpOrGet("analyst@blindwall.local", "Analyst@123456", "Ada Analyst");
   await prisma.user.update({ where: { id: admin!.id }, data: { role: "ADMIN", emailVerified: true } });
   await prisma.user.update({ where: { id: analyst!.id }, data: { role: "ANALYST", emailVerified: true } });
 
