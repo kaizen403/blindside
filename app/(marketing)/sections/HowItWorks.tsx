@@ -14,25 +14,25 @@ const steps = [
     number: 1,
     title: "Submit your application",
     description:
-      "Share your website, app, API, or target asset. We define the scope, rules of engagement, and success criteria together.",
+      "Share your target asset. We define scope and rules together.",
   },
   {
     number: 2,
     title: "We identify security gaps",
     description:
-      "Our team maps the attack surface, runs targeted scans, and validates findings with safe proof-of-concept exploits.",
+      "We map the attack surface, scan, and validate findings.",
   },
   {
     number: 3,
     title: "Receive your report",
     description:
-      "Get a clear vulnerability report with severity levels, remediation steps, and a prioritized fix list you can act on immediately.",
+      "Get a clear report with severity levels and a prioritized fix list.",
   },
   {
     number: 4,
     title: "Fix and verify",
     description:
-      "Follow the prioritized remediation plan, apply fixes at your own pace, and we re-test to confirm vulnerabilities are resolved.",
+      "Apply fixes at your pace. We re-test to confirm resolution.",
   },
 ];
 
@@ -66,54 +66,35 @@ function StepCard({
         delay: index * 0.1,
         ease,
       }}
-      className="relative flex gap-6 md:gap-8 cursor-default"
+      className="relative flex flex-col items-center text-center cursor-default"
     >
-      <div className="flex flex-col items-center">
-        <motion.div
-          style={{ scale: nodeScale, opacity: nodeOpacity }}
-          className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 z-10 liquid-glass"
+      <motion.div
+        style={{ scale: nodeScale, opacity: nodeOpacity }}
+        className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 z-10 liquid-glass bg-[#09090b] mb-5"
+      >
+        <motion.span
+          className="text-sm font-semibold tabular-nums"
+          animate={stepInView ? { color: "#fafafa" } : { color: "rgba(250,250,250,0.4)" }}
+          transition={{ duration: 0.4, delay: 0.1 }}
         >
-          <motion.span
-            className="text-sm font-semibold tabular-nums"
-            animate={stepInView ? { color: "#fafafa" } : { color: "rgba(250,250,250,0.4)" }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-          >
-            {step.number}
-          </motion.span>
-        </motion.div>
-        {index < steps.length - 1 && (
-          <div className="w-px flex-1 my-2 relative">
-            <div className="absolute inset-0 bg-white/[0.06]" />
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-b from-emerald-500/40 to-emerald-500/10 origin-top"
-              initial={{ scaleY: 0 }}
-              animate={stepInView ? { scaleY: 1 } : { scaleY: 0 }}
-              transition={{
-                duration: 0.8,
-                delay: index * 0.15 + 0.3,
-                ease,
-              }}
-            />
-          </div>
-        )}
-      </div>
+          {step.number}
+        </motion.span>
+      </motion.div>
 
-      <div className={index < steps.length - 1 ? "pb-14 md:pb-16" : "pb-0"}>
-        <motion.h3
-          className="text-base font-semibold leading-tight mb-2"
-          animate={stepInView ? { opacity: 1, x: 0 } : { opacity: 0.4, x: 4 }}
-          transition={{ duration: 0.4, ease }}
-        >
-          {step.title}
-        </motion.h3>
-        <motion.p
-          className="text-sm text-muted-foreground leading-relaxed max-w-sm"
-          animate={stepInView ? { opacity: 1 } : { opacity: 0 }}
-          transition={{ duration: 0.5, delay: 0.15, ease }}
-        >
-          {step.description}
-        </motion.p>
-      </div>
+      <motion.h3
+        className="text-base font-semibold leading-tight mb-2"
+        animate={stepInView ? { opacity: 1 } : { opacity: 0.4 }}
+        transition={{ duration: 0.4, ease }}
+      >
+        {step.title}
+      </motion.h3>
+      <motion.p
+        className="text-sm text-muted-foreground leading-relaxed max-w-[240px]"
+        animate={stepInView ? { opacity: 1 } : { opacity: 0 }}
+        transition={{ duration: 0.5, delay: 0.15, ease }}
+      >
+        {step.description}
+      </motion.p>
     </motion.div>
   );
 }
@@ -127,15 +108,14 @@ export default function HowItWorks() {
     offset: ["start 0.7", "end 0.5"],
   });
 
-  const lineHeight = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
+  const lineWidth = useTransform(scrollYProgress, [0, 0.6], ["0%", "100%"]);
   const headingParallax = useTransform(scrollYProgress, [0, 0.3], [20, 0]);
-  const stepsParallax = useTransform(scrollYProgress, [0, 1], [30, -15]);
 
   return (
     <section
       id="how-it-works"
       ref={sectionRef}
-      className="px-8 md:px-28 py-24 md:py-32"
+      className="px-6 md:px-28 py-20 md:py-32"
     >
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -145,7 +125,7 @@ export default function HowItWorks() {
         className="mb-16 text-center"
       >
         <h2 className="text-4xl md:text-5xl font-medium tracking-[-1.5px] mb-4">
-          How Blind Side{" "}
+          How Blindwall{" "}
           <span className="font-serif italic font-normal">works</span>
         </h2>
         <p className="text-lg text-muted-foreground max-w-xl mx-auto">
@@ -153,13 +133,16 @@ export default function HowItWorks() {
         </p>
       </motion.div>
 
-      <motion.div style={{ y: stepsParallax }} className="max-w-lg mx-auto relative">
-        <motion.div
-          className="absolute left-[19px] md:left-[19px] top-0 w-px bg-emerald-500/20"
-          style={{ height: lineHeight }}
-        />
+      <div className="relative max-w-5xl mx-auto">
+        <div className="hidden md:block absolute top-[20px] left-[calc(12.5%+20px)] right-[calc(12.5%+20px)] h-px z-0">
+          <div className="absolute inset-0 bg-white/[0.06]" />
+          <motion.div
+            className="absolute inset-y-0 left-0 bg-gradient-to-r from-emerald-500/40 to-emerald-500/10"
+            style={{ width: lineWidth }}
+          />
+        </div>
 
-        <div className="relative flex flex-col">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10 md:gap-6">
           {steps.map((step, i) => (
             <StepCard
               key={step.number}
@@ -170,7 +153,7 @@ export default function HowItWorks() {
             />
           ))}
         </div>
-      </motion.div>
+      </div>
     </section>
   );
 }
