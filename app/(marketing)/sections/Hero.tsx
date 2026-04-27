@@ -61,10 +61,10 @@ export default function Hero() {
 
         <motion.div
           style={{ y: contentY, opacity: contentOpacity }}
-          className="flex-1 flex flex-col justify-center items-center px-6 pb-32"
+          className="flex-1 flex flex-col justify-center items-center px-5 pb-24 sm:pb-32"
         >
-          <div className="max-w-4xl text-center" style={{ perspective: 600 }}>
-            <h1 className="text-[clamp(2.5rem,6vw,4.5rem)] font-medium tracking-[-0.04em] leading-[1.1] mb-6 flex flex-wrap justify-center gap-x-[0.3em]">
+          <div className="max-w-4xl text-center px-2" style={{ perspective: 600 }}>
+            <h1 className="text-[clamp(2rem,6vw,4.5rem)] font-medium tracking-[-0.04em] leading-[1.1] mb-6 flex flex-wrap justify-center gap-x-[0.3em]">
               {HEADING_WORDS.map((word, i) => (
                 <motion.span
                   key={word}
@@ -94,7 +94,7 @@ export default function Hero() {
               className="text-base leading-relaxed text-white/60 max-w-[520px] mx-auto mb-10"
             >
               AI is making cyberattacks faster, smarter, and more scalable.
-              Blind Side helps you identify vulnerabilities in your website,
+              Blindwall helps you identify vulnerabilities in your website,
               app, or infrastructure before they can be exploited.
             </motion.p>
 
@@ -109,7 +109,7 @@ export default function Hero() {
                 type="button"
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
-                className="bg-[var(--accent)] text-white rounded-full px-12 py-4.5 text-lg font-semibold cursor-pointer hover:brightness-110 transition-all shadow-[0_0_30px_rgba(220,38,38,0.3)]"
+                className="bg-[var(--accent)] text-white rounded-full px-8 sm:px-12 py-4 text-base sm:text-lg font-semibold cursor-pointer hover:brightness-110 transition-all shadow-[0_0_30px_rgba(220,38,38,0.3)]"
               >
                 Get Protected for <span className="text-xl font-bold">₹999</span>
               </motion.button>

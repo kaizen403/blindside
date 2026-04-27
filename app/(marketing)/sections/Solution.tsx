@@ -21,7 +21,7 @@ export default function Solution() {
     <section
       id="solution"
       ref={sectionRef}
-      className="px-8 md:px-28 py-24 md:py-32"
+      className="px-6 md:px-28 py-20 md:py-32"
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
         <motion.div
@@ -58,7 +58,7 @@ export default function Solution() {
             transition={{ duration: 0.6, delay: 0.1, ease }}
             className="text-lg text-muted-foreground mb-4"
           >
-            Blind Side helps you find security weaknesses before attackers do.
+            Blindwall helps you find security weaknesses before attackers do.
           </motion.p>
 
           <motion.p

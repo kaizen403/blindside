@@ -61,26 +61,26 @@ export default function BuiltFor() {
     <section
       id="built-for"
       ref={sectionRef}
-      className="px-8 md:px-28 py-24 md:py-32 relative overflow-hidden"
+      className="px-6 md:px-28 py-20 md:py-32 relative overflow-hidden"
     >
       <motion.div
         initial={{ opacity: 0, y: 28 }}
         animate={isInView ? { opacity: 1, y: 0 } : {}}
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         style={{ y: headingParallax }}
-        className="mb-20 md:mb-24 relative z-10"
+        className="mb-20 md:mb-24 relative z-10 text-center"
       >
-        <div className="flex items-center gap-3 mb-5">
+        <div className="flex items-center gap-3 mb-5 justify-center">
           <span className="h-2 w-2 rounded-full bg-[#dc2626]" />
           <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-[#dc2626]">
             Audience
           </span>
         </div>
         <h2 className="text-5xl md:text-7xl font-medium tracking-[-0.03em] leading-[0.95] mb-6">
-          Who Blind Side is{" "}
+          Who Blindwall is{" "}
           <span className="font-serif italic font-normal">for</span>
         </h2>
-        <p className="text-lg md:text-xl text-white/50 max-w-xl leading-relaxed">
+        <p className="text-lg md:text-xl text-white/50 max-w-xl leading-relaxed mx-auto">
           Designed for teams that want practical, affordable security without
           unnecessary complexity.
         </p>
@@ -88,7 +88,7 @@ export default function BuiltFor() {
 
       <motion.div
         style={{ y: gridParallax }}
-        className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6 max-w-6xl"
+        className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6 max-w-6xl mx-auto"
       >
         {audiences.map((item, i) => (
           <motion.div

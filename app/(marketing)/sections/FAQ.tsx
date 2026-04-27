@@ -6,9 +6,9 @@ import { ChevronDown } from "lucide-react";
 
 const faqs = [
   {
-    question: "What is Blind Side?",
+    question: "What is Blindwall?",
     answer:
-      "Blind Side helps businesses identify vulnerabilities in their website, app, or infrastructure so they can stay protected from modern AI-driven threats.",
+      "Blindwall helps businesses identify vulnerabilities in their website, app, or infrastructure so they can stay protected from modern AI-driven threats.",
   },
   {
     question: "What do I get for \u20b9999?",
@@ -18,7 +18,7 @@ const faqs = [
   {
     question: "Who is this for?",
     answer:
-      "Blind Side is built for startups, small businesses, SaaS teams, agencies, and anyone who wants a simple security check.",
+      "Blindwall is built for startups, small businesses, SaaS teams, agencies, and anyone who wants a simple security check.",
   },
   {
     question: "What can be checked?",
@@ -33,7 +33,7 @@ const faqs = [
   {
     question: "Is this suitable for small businesses?",
     answer:
-      "Yes. Blind Side is designed to make security more accessible and affordable.",
+      "Yes. Blindwall is designed to make security more accessible and affordable.",
   },
 ];
 
@@ -63,7 +63,7 @@ export default function FAQ() {
   const itemsParallax = useTransform(scrollYProgress, [0, 1], [30, -10]);
 
   return (
-    <section id="faq" ref={sectionRef} className="px-8 md:px-28 py-24 md:py-32">
+    <section id="faq" ref={sectionRef} className="px-6 md:px-28 py-20 md:py-32">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={isInView ? { opacity: 1, y: 0 } : {}}

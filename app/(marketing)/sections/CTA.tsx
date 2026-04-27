@@ -13,7 +13,7 @@ export default function CTA() {
   const contentY = useTransform(scrollYProgress, [0, 1], [30, -10]);
 
   return (
-    <section id="cta" ref={sectionRef} className="relative py-32 md:py-40 px-8 md:px-28">
+    <section id="cta" ref={sectionRef} className="relative py-24 md:py-40 px-6 md:px-28">
       <motion.div
         aria-hidden
         style={{ y: orbY }}
@@ -44,7 +44,7 @@ export default function CTA() {
         </h2>
 
         <p className="text-lg text-muted-foreground mb-10 max-w-md">
-          AI threats are growing fast. Blind Side helps you discover
+          AI threats are growing fast. Blindwall helps you discover
           vulnerabilities early, understand your risks, and take action before
           damage is done.
         </p>

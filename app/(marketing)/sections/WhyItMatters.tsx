@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useInView, useScroll, useTransform, useMotionValueEvent } from "framer-motion";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 
 const EASE = [0.22, 1, 0.36, 1] as [number, number, number, number];
 
@@ -37,6 +37,71 @@ function AnimatedCounter({ target, suffix }: { target: number; suffix: string })
   );
 }
 
+function ThreatPulse() {
+  const [alerts, setAlerts] = useState<{ id: number; text: string; x: number; y: number; color: string }[]>([]);
+  const idRef = useRef(0);
+
+  useEffect(() => {
+    const threats = [
+      { text: "SQLi detected", color: "#dc2626" },
+      { text: "XSS payload", color: "#f97316" },
+      { text: "CSRF token missing", color: "#dc2626" },
+      { text: "Open port 3306", color: "#eab308" },
+      { text: "Exposed .env", color: "#dc2626" },
+      { text: "Weak cipher", color: "#f97316" },
+      { text: "Path traversal", color: "#eab308" },
+      { text: "Unpatched CVE", color: "#dc2626" },
+      { text: "API key leaked", color: "#dc2626" },
+      { text: "SSRF attempt", color: "#f97316" },
+      { text: "DNS rebind", color: "#eab308" },
+      { text: "RCE vector", color: "#dc2626" },
+    ];
+
+    const interval = setInterval(() => {
+      const t = threats[Math.floor(Math.random() * threats.length)];
+      const id = idRef.current++;
+      setAlerts((prev) => [
+        ...prev.slice(-8),
+        { id, text: t.text, x: 15 + Math.random() * 70, y: 10 + Math.random() * 80, color: t.color },
+      ]);
+    }, 1400);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="relative w-full h-full min-h-[200px]">
+      <svg viewBox="0 0 200 200" className="absolute inset-0 w-full h-full opacity-[0.07]">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <circle key={i} cx={100} cy={100} r={20 + i * 18} fill="none" stroke="#dc2626" strokeWidth={0.5} />
+        ))}
+        <line x1={100} y1={0} x2={100} y2={200} stroke="#dc2626" strokeWidth={0.3} />
+        <line x1={0} y1={100} x2={200} y2={100} stroke="#dc2626" strokeWidth={0.3} />
+      </svg>
+
+      <svg viewBox="0 0 200 200" className="absolute inset-0 w-full h-full">
+        <line x1={100} y1={0} x2={100} y2={200} stroke="#dc2626" strokeWidth={1.5} opacity={0.08}>
+          <animate attributeName="x1" values="0;200" dur="3s" repeatCount="indefinite" />
+          <animate attributeName="x2" values="0;200" dur="3s" repeatCount="indefinite" />
+        </line>
+      </svg>
+
+      {alerts.map((a) => (
+        <motion.div
+          key={a.id}
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: [0, 0.7, 0], scale: [0.5, 1, 0.8] }}
+          transition={{ duration: 2.8, ease: "easeOut" }}
+          className="absolute font-mono text-[9px] whitespace-nowrap pointer-events-none"
+          style={{ left: `${a.x}%`, top: `${a.y}%`, color: a.color }}
+        >
+          <span className="opacity-60">⚠</span> {a.text}
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
 export default function WhyItMatters() {
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
@@ -58,7 +123,7 @@ export default function WhyItMatters() {
     <section
       id="why-it-matters"
       ref={sectionRef}
-      className="relative px-8 md:px-28 py-32 md:py-48 overflow-hidden"
+      className="relative px-6 md:px-28 py-24 md:py-48 overflow-hidden"
     >
       <div className="max-w-7xl mx-auto">
         <motion.div
@@ -146,7 +211,7 @@ export default function WhyItMatters() {
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#dc2626] hidden md:block" />
             <div className="md:pl-12">
               <p className="text-[clamp(1.8rem,5vw,4.5rem)] font-medium tracking-[-0.02em] leading-[1.05] max-w-[18ch] text-white">
-                Blind Side helps you take action{" "}
+                Blindwall helps you take action{" "}
                 <span className="font-serif italic font-normal text-[#dc2626]">
                   before
                 </span>{" "}
@@ -155,15 +220,11 @@ export default function WhyItMatters() {
             </div>
           </div>
           <div className="md:col-span-5 flex justify-center md:justify-end">
-            <motion.div style={{ y: videoY, scale: videoScale }}>
-              <video
-                src="/take-action.mp4"
-                autoPlay
-                loop
-                muted
-                playsInline
-                className="w-full max-w-[320px] h-auto opacity-60"
-              />
+            <motion.div
+              style={{ y: videoY, scale: videoScale }}
+              className="w-full max-w-[320px]"
+            >
+              <ThreatPulse />
             </motion.div>
           </div>
         </motion.div>

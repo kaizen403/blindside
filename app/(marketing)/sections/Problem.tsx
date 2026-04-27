@@ -21,7 +21,7 @@ export default function Problem() {
     <section
       id="problem"
       ref={sectionRef}
-      className="px-8 md:px-28 py-24 md:py-32"
+      className="px-6 md:px-28 py-20 md:py-32"
     >
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
         <motion.div style={{ y: textY }}>
