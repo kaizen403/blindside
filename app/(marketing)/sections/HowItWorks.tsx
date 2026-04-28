@@ -43,11 +43,13 @@ function StepCard({
   index,
   isInView,
   progress,
+  isLast,
 }: {
   step: (typeof steps)[number];
   index: number;
   isInView: boolean;
   progress: MotionValue<number>;
+  isLast: boolean;
 }) {
   const stepRef = useRef<HTMLDivElement>(null);
   const stepInView = useInView(stepRef, { once: true, margin: "-40px" });
@@ -55,6 +57,7 @@ function StepCard({
   const threshold = index / steps.length;
   const nodeScale = useTransform(progress, [threshold, threshold + 0.05], [1, 1.15]);
   const nodeOpacity = useTransform(progress, [threshold, threshold + 0.05], [0.5, 1]);
+  const connectorScale = useTransform(progress, [threshold, threshold + 0.15], [0, 1]);
 
   return (
     <motion.div
@@ -80,6 +83,17 @@ function StepCard({
           {step.number}
         </motion.span>
       </motion.div>
+
+      {!isLast && (
+        <div className="hidden md:block absolute top-[20px] left-[calc(50%+24px)] right-[-calc(50%-24px)] w-[calc(100%-48px)] h-[1px] z-0" style={{ left: "calc(50% + 24px)", width: "calc(100% - 8px)" }}>
+          <div className="absolute inset-0 border-t border-dashed border-white/[0.1]" />
+          <motion.div
+            className="absolute inset-y-0 left-0 h-[2px] -top-[0.5px] rounded-full bg-gradient-to-r from-emerald-500/50 to-emerald-500/10"
+            style={{ scaleX: connectorScale, transformOrigin: "left" }}
+          />
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-white/[0.1]" />
+        </div>
+      )}
 
       <motion.h3
         className="text-base font-semibold leading-tight mb-2"
@@ -108,7 +122,6 @@ export default function HowItWorks() {
     offset: ["start 0.7", "end 0.5"],
   });
 
-  const lineWidth = useTransform(scrollYProgress, [0, 0.6], ["0%", "100%"]);
   const headingParallax = useTransform(scrollYProgress, [0, 0.3], [20, 0]);
 
   return (
@@ -134,14 +147,6 @@ export default function HowItWorks() {
       </motion.div>
 
       <div className="relative max-w-5xl mx-auto">
-        <div className="hidden md:block absolute top-[20px] left-[calc(12.5%+20px)] right-[calc(12.5%+20px)] h-px z-0">
-          <div className="absolute inset-0 bg-white/[0.06]" />
-          <motion.div
-            className="absolute inset-y-0 left-0 bg-gradient-to-r from-emerald-500/40 to-emerald-500/10"
-            style={{ width: lineWidth }}
-          />
-        </div>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10 md:gap-6">
           {steps.map((step, i) => (
             <StepCard
@@ -150,6 +155,7 @@ export default function HowItWorks() {
               index={i}
               isInView={isInView}
               progress={scrollYProgress}
+              isLast={i === steps.length - 1}
             />
           ))}
         </div>
