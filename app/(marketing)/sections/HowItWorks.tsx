@@ -91,7 +91,6 @@ function StepCard({
             className="absolute inset-y-0 left-0 h-[2px] -top-[0.5px] rounded-full bg-gradient-to-r from-emerald-500/50 to-emerald-500/10"
             style={{ scaleX: connectorScale, transformOrigin: "left" }}
           />
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-white/[0.1]" />
         </div>
       )}
 
