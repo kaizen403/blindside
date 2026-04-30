@@ -13,7 +13,7 @@ type SendArgs = {
 
 const azureConnectionString = process.env.AZURE_COMMUNICATION_CONNECTION_STRING;
 const resendApiKey = process.env.RESEND_API_KEY;
-const from = process.env.EMAIL_FROM || "Blindwall <reports@blindwall.app>";
+const from = process.env.EMAIL_FROM || "Blindwall <reports@blindwall.tech>";
 const replyTo = process.env.EMAIL_REPLY_TO;
 
 const isResendPlaceholder =
@@ -121,6 +121,12 @@ export async function sendEmail({ to, subject, html, replyTo: overrideReplyTo, d
       return { ok: true, provider: "resend", messageId: result.data?.id };
     } catch (error) {
       console.error("[email] Resend send failed", error);
+      await logMailEvent({
+        eventType: "SEND_FAILED",
+        providerEventId: `resend:SEND_FAILED:${Date.now()}:${to}`,
+        recipient: to,
+        payload: { provider: "resend", subject, error: error instanceof Error ? error.message : String(error) },
+      });
       return { ok: false, provider: "resend" };
     }
   }

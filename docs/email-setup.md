@@ -6,7 +6,7 @@ Created in subscription `483887af-58ba-4879-bf78-4c291fbc9240`:
 
 - Resource group: `rg-blindwall-mail` (`southindia`)
 - Email Communication Service: `blindwall-email`
-- Custom email domain: `blindwall.app`
+- Custom email domain: `blindwall.tech`
 - Communication Service: `blindwall-comm`
 - Sender username: `reports` / display name `Blindwall`
 - User engagement tracking: `Enabled` for opens and clicks
@@ -15,15 +15,15 @@ The custom domain is not linked yet because Azure requires DNS verification firs
 
 ## DNS records to add for Azure outbound mail
 
-Add these records in the DNS zone for `blindwall.app`.
+Add these records in the DNS zone for `blindwall.tech`.
 
 | Purpose | Type | Host / Name | Value | TTL |
 | --- | --- | --- | --- | --- |
-| Azure domain verification | TXT | `@` or `blindwall.app` | `ms-domain-verification=da635b13-b3b5-4a09-92aa-9f7a26679b23` | `3600` |
-| SPF for Azure outbound | TXT | `@` or `blindwall.app` | `v=spf1 include:spf.protection.outlook.com -all` | `3600` |
+| Azure domain verification | TXT | `@` or `blindwall.tech` | `ms-domain-verification=336b8788-50f1-4d88-b14a-fb472575c04c` | `3600` |
+| SPF for Azure outbound | TXT | `@` or `blindwall.tech` | `v=spf1 include:spf.protection.outlook.com -all` | `3600` |
 | DKIM 1 | CNAME | `selector1-azurecomm-prod-net._domainkey` | `selector1-azurecomm-prod-net._domainkey.azurecomm.net` | `3600` |
 | DKIM 2 | CNAME | `selector2-azurecomm-prod-net._domainkey` | `selector2-azurecomm-prod-net._domainkey.azurecomm.net` | `3600` |
-| DMARC | TXT | `_dmarc` | `v=DMARC1; p=none; rua=mailto:dmarc@blindwall.app; fo=1` | `3600` |
+| DMARC | TXT | `_dmarc` | `v=DMARC1; p=none; rua=mailto:dmarc@blindwall.tech; fo=1` | `3600` |
 
 ### Important SPF note with Zoho
 
@@ -41,7 +41,7 @@ Zoho's exact include depends on the Zoho region/account, so use Zoho's generated
 
 For inbound, add the MX records Zoho gives you during setup. Do not guess these blindly because they differ by Zoho region.
 
-Typical Zoho examples are shaped like:
+Typical Zoho India examples are shaped like:
 
 ```txt
 @ MX 10 mx.zoho.in
@@ -59,13 +59,13 @@ Run these Azure verification commands:
 az communication email domain initiate-verification \
   -g rg-blindwall-mail \
   --email-service-name blindwall-email \
-  --domain-name blindwall.app \
+  --domain-name blindwall.tech \
   --verification-type Domain
 
-az communication email domain initiate-verification -g rg-blindwall-mail --email-service-name blindwall-email --domain-name blindwall.app --verification-type SPF
-az communication email domain initiate-verification -g rg-blindwall-mail --email-service-name blindwall-email --domain-name blindwall.app --verification-type DKIM
-az communication email domain initiate-verification -g rg-blindwall-mail --email-service-name blindwall-email --domain-name blindwall.app --verification-type DKIM2
-az communication email domain initiate-verification -g rg-blindwall-mail --email-service-name blindwall-email --domain-name blindwall.app --verification-type DMARC
+az communication email domain initiate-verification -g rg-blindwall-mail --email-service-name blindwall-email --domain-name blindwall.tech --verification-type SPF
+az communication email domain initiate-verification -g rg-blindwall-mail --email-service-name blindwall-email --domain-name blindwall.tech --verification-type DKIM
+az communication email domain initiate-verification -g rg-blindwall-mail --email-service-name blindwall-email --domain-name blindwall.tech --verification-type DKIM2
+az communication email domain initiate-verification -g rg-blindwall-mail --email-service-name blindwall-email --domain-name blindwall.tech --verification-type DMARC
 ```
 
 Then link the verified domain to the Communication Service:
@@ -74,7 +74,7 @@ Then link the verified domain to the Communication Service:
 DOMAIN_ID=$(az communication email domain show \
   -g rg-blindwall-mail \
   --email-service-name blindwall-email \
-  -n blindwall.app \
+  -n blindwall.tech \
   --query id -o tsv)
 
 az communication update \
@@ -90,13 +90,15 @@ GitHub Actions secrets have been set for:
 - `AZURE_COMMUNICATION_CONNECTION_STRING`
 - `EMAIL_FROM`
 - `EMAIL_REPLY_TO`
+- `AZURE_EVENT_GRID_WEBHOOK_SECRET`
 
 Add the same values in the actual hosting provider as runtime env vars:
 
 ```env
 AZURE_COMMUNICATION_CONNECTION_STRING="endpoint=https://...;accesskey=..."
-EMAIL_FROM="Blindwall <reports@blindwall.app>"
-EMAIL_REPLY_TO="hello@blindwall.app"
+EMAIL_FROM="Blindwall <reports@blindwall.tech>"
+EMAIL_REPLY_TO="hello@blindwall.tech"
+AZURE_EVENT_GRID_WEBHOOK_SECRET="..."
 ```
 
 ## Analytics
@@ -106,13 +108,15 @@ Implemented in app code:
 - Outbound send result logging (`SENT`, `SEND_FAILED`) in Prisma `MailEvent`
 - Event Grid webhook endpoint: `/api/webhooks/azure-email`
 - Webhook accepts Azure Event Grid subscription validation
+- Webhook requires `AZURE_EVENT_GRID_WEBHOOK_SECRET` in production and accepts it via `?secret=...` or `x-webhook-secret`
+- Webhook returns `400` for invalid JSON instead of throwing `500`
 - Webhook stores delivery/open/click events into `MailEvent`
 
-After the app is publicly deployed, create the Event Grid subscription:
+After the app is publicly deployed, create the Event Grid subscription with the secret query parameter:
 
 ```bash
 COMM_ID="/subscriptions/483887af-58ba-4879-bf78-4c291fbc9240/resourceGroups/rg-blindwall-mail/providers/Microsoft.Communication/communicationServices/blindwall-comm"
-WEBHOOK="https://blindwall.app/api/webhooks/azure-email"
+WEBHOOK="https://blindwall.tech/api/webhooks/azure-email?secret=<AZURE_EVENT_GRID_WEBHOOK_SECRET>"
 
 az eventgrid event-subscription create \
   --name blindwall-email-events \
