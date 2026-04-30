@@ -1,25 +1,138 @@
+import { EmailClient, KnownEmailSendStatus, type EmailMessage } from "@azure/communication-email";
+import { Prisma } from "@prisma/client";
 import { Resend } from "resend";
+import { prisma } from "./prisma";
 
-type SendArgs = { to: string; subject: string; html: string };
+type SendArgs = {
+  to: string;
+  subject: string;
+  html: string;
+  replyTo?: string;
+  disableTracking?: boolean;
+};
 
-const apiKey = process.env.RESEND_API_KEY;
-const from = process.env.EMAIL_FROM || "Blindwall <onboarding@resend.dev>";
-const isPlaceholder = !apiKey || apiKey.startsWith("re_placeholder") || apiKey === "re_xxx";
+const azureConnectionString = process.env.AZURE_COMMUNICATION_CONNECTION_STRING;
+const resendApiKey = process.env.RESEND_API_KEY;
+const from = process.env.EMAIL_FROM || "Blindwall <reports@blindwall.tech>";
+const replyTo = process.env.EMAIL_REPLY_TO;
 
-const client = !isPlaceholder ? new Resend(apiKey) : null;
+const isResendPlaceholder =
+  !resendApiKey || resendApiKey.startsWith("re_placeholder") || resendApiKey === "re_xxx";
 
-export async function sendEmail({ to, subject, html }: SendArgs) {
-  if (!client) {
-    console.log(`[email:dev] to=${to} subject="${subject}"\n${html.replace(/<[^>]+>/g, "").slice(0, 240)}\n`);
-    return { ok: true, dev: true };
-  }
+const azureClient = azureConnectionString ? new EmailClient(azureConnectionString) : null;
+const resendClient = !azureClient && !isResendPlaceholder ? new Resend(resendApiKey) : null;
+
+function stripHtml(html: string) {
+  return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function parseEmailAddress(value: string) {
+  const match = value.match(/<([^>]+)>/);
+  return (match?.[1] ?? value).trim();
+}
+
+function isJsonObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function toInputJson(value: unknown): Prisma.InputJsonValue {
+  return JSON.parse(JSON.stringify(isJsonObject(value) ? value : { value }));
+}
+
+async function logMailEvent(args: {
+  eventType: string;
+  providerEventId?: string;
+  messageId?: string;
+  recipient?: string;
+  eventTime?: Date;
+  payload: unknown;
+}) {
   try {
-    await client.emails.send({ from, to, subject, html });
-    return { ok: true };
-  } catch (e) {
-    console.error("[email] send failed", e);
-    return { ok: false };
+    await prisma.mailEvent.upsert({
+      where: { providerEventId: args.providerEventId ?? `${args.eventType}:${args.messageId}:${args.recipient}` },
+      update: {
+        messageId: args.messageId,
+        recipient: args.recipient,
+        eventTime: args.eventTime,
+        payload: toInputJson(args.payload),
+      },
+      create: {
+        providerEventId: args.providerEventId ?? `${args.eventType}:${args.messageId}:${args.recipient}`,
+        eventType: args.eventType,
+        messageId: args.messageId,
+        recipient: args.recipient,
+        eventTime: args.eventTime,
+        payload: toInputJson(args.payload),
+      },
+    });
+  } catch (error) {
+    console.error("[email] failed to log mail event", error);
   }
+}
+
+export async function sendEmail({ to, subject, html, replyTo: overrideReplyTo, disableTracking }: SendArgs) {
+  if (azureClient) {
+    const senderAddress = parseEmailAddress(from);
+    const message: EmailMessage = {
+      senderAddress,
+      recipients: { to: [{ address: to }] },
+      replyTo: (overrideReplyTo || replyTo) ? [{ address: overrideReplyTo || replyTo! }] : undefined,
+      disableUserEngagementTracking: disableTracking,
+      content: {
+        subject,
+        html,
+        plainText: stripHtml(html),
+      },
+    };
+
+    try {
+      const poller = await azureClient.beginSend(message, { updateIntervalInMs: 1_000 });
+      const result = await poller.pollUntilDone();
+      await logMailEvent({
+        eventType: "SENT",
+        providerEventId: `azure:${result.id}:SENT:${to}`,
+        messageId: result.id,
+        recipient: to,
+        payload: { provider: "azure", result, subject },
+      });
+      return { ok: result.status === KnownEmailSendStatus.Succeeded, provider: "azure", messageId: result.id, status: result.status };
+    } catch (error) {
+      console.error("[email] Azure send failed", error);
+      await logMailEvent({
+        eventType: "SEND_FAILED",
+        providerEventId: `azure:SEND_FAILED:${Date.now()}:${to}`,
+        recipient: to,
+        payload: { provider: "azure", subject, error: error instanceof Error ? error.message : String(error) },
+      });
+      return { ok: false, provider: "azure" };
+    }
+  }
+
+  if (resendClient) {
+    try {
+      const result = await resendClient.emails.send({ from, to, subject, html, replyTo: overrideReplyTo || replyTo });
+      await logMailEvent({
+        eventType: "SENT",
+        providerEventId: `resend:${result.data?.id ?? Date.now()}:SENT:${to}`,
+        messageId: result.data?.id,
+        recipient: to,
+        payload: { provider: "resend", result, subject },
+      });
+      return { ok: true, provider: "resend", messageId: result.data?.id };
+    } catch (error) {
+      console.error("[email] Resend send failed", error);
+      await logMailEvent({
+        eventType: "SEND_FAILED",
+        providerEventId: `resend:SEND_FAILED:${Date.now()}:${to}`,
+        recipient: to,
+        payload: { provider: "resend", subject, error: error instanceof Error ? error.message : String(error) },
+      });
+      return { ok: false, provider: "resend" };
+    }
+  }
+
+  console.log(`[email:dev] to=${to} subject="${subject}"\n${stripHtml(html).slice(0, 240)}\n`);
+  return { ok: true, dev: true };
 }
 
 export function magicLinkEmail(url: string) {
