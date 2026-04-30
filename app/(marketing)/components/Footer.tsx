@@ -2,6 +2,7 @@
 
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
+import Image from "next/image";
 
 const ease = [0.22, 1, 0.36, 1] as [number, number, number, number];
 
@@ -45,7 +46,7 @@ export default function Footer() {
             className="md:col-span-4"
           >
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-2 h-2 rounded-full bg-[#dc2626]" />
+              <Image src="/logo.png" alt="Blindwall" width={24} height={24} className="rounded" />
               <span className="text-lg font-semibold tracking-tight">
                 Blindwall
               </span>

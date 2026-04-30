@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
+import Image from "next/image";
 
 const navLinks = [
   { label: "Features", href: "#features" },
@@ -49,6 +50,7 @@ export default function Navbar() {
       >
         <div className="flex items-center gap-12 md:gap-20">
           <div className="flex items-center gap-2">
+            <Image src="/logo.png" alt="Blindwall" width={28} height={28} className="rounded" />
             <span className="text-xl font-bold tracking-tight">Blindwall</span>
           </div>
 
@@ -122,6 +124,7 @@ export default function Navbar() {
               className="absolute right-0 top-0 bottom-0 w-[280px] bg-[#0a0a0c] border-l border-white/[0.06] p-8 flex flex-col"
             >
               <div className="flex items-center justify-between mb-12">
+                <Image src="/logo.png" alt="Blindwall" width={24} height={24} className="rounded" />
                 <span className="text-lg font-bold tracking-tight">Blindwall</span>
                 <button
                   type="button"
