@@ -303,3 +303,18 @@ model AuditLog {
   @@index([entity, entityId])
   @@index([createdAt])
 }
+
+model MailEvent {
+  id              String    @id @default(cuid())
+  providerEventId String    @unique
+  eventType       String
+  messageId       String?
+  recipient       String?
+  eventTime       DateTime?
+  payload         Json
+  createdAt       DateTime  @default(now())
+
+  @@index([messageId])
+  @@index([recipient, eventType])
+  @@index([eventType, createdAt])
+}
