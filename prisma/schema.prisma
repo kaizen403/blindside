@@ -318,3 +318,79 @@ model MailEvent {
   @@index([recipient, eventType])
   @@index([eventType, createdAt])
 }
+
+// ─── Outreach ───────────────────────────────────────────────────────────────
+
+model OutreachCampaign {
+  id           String    @id @default(cuid())
+  name         String
+  subject      String
+  templateHtml String
+  templateText String
+  fromName     String    @default("Rishi from Blindwall")
+  replyTo      String    @default("rishi@blindwall.tech")
+  status       CampaignStatus @default(DRAFT)
+  contacts     OutreachContact[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@map("outreach_campaign")
+}
+
+enum CampaignStatus {
+  DRAFT
+  SENDING
+  SENT
+  PAUSED
+}
+
+model OutreachContact {
+  id         String         @id @default(cuid())
+  campaignId String
+  campaign   OutreachCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  email      String
+  name       String?
+  company    String?
+  status     ContactStatus  @default(PENDING)
+  messageId  String?        // ACS message ID after send
+  sentAt     DateTime?
+  openedAt   DateTime?
+  clickedAt  DateTime?
+  repliedAt  DateTime?
+  openCount  Int            @default(0)
+  clickCount Int            @default(0)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@unique([campaignId, email])
+  @@index([messageId])
+  @@map("outreach_contact")
+}
+
+enum ContactStatus {
+  PENDING
+  SENDING
+  SENT
+  OPENED
+  CLICKED
+  REPLIED
+  BOUNCED
+  FAILED
+}
+
+model OutreachEvent {
+  id         String   @id @default(cuid())
+  contactId  String
+  messageId  String?
+  eventType  String   // Opened, Clicked, Delivered, Bounced, etc.
+  linkUrl    String?
+  ipAddress  String?
+  userAgent  String?
+  eventTime  DateTime?
+  payload    Json
+  createdAt  DateTime @default(now())
+
+  @@index([contactId])
+  @@index([messageId])
+  @@map("outreach_event")
+}

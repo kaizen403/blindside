@@ -1,128 +1,107 @@
-import { timingSafeEqual } from "node:crypto";
-import { Prisma } from "@prisma/client";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export const runtime = "nodejs";
-
-type EventGridEvent = {
-  id?: string;
-  eventType?: string;
-  eventTime?: string;
-  subject?: string;
-  data?: Record<string, unknown>;
-};
-
-function asRecord(value: unknown): Record<string, unknown> {
-  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
-}
-
-function asString(value: unknown): string | undefined {
-  return typeof value === "string" && value.length > 0 ? value : undefined;
-}
-
-function safeEquals(left: string, right: string) {
-  const leftBuffer = Buffer.from(left);
-  const rightBuffer = Buffer.from(right);
-
-  return leftBuffer.length === rightBuffer.length && timingSafeEqual(leftBuffer, rightBuffer);
-}
-
-function isAuthorized(request: Request) {
-  const webhookSecret = process.env.AZURE_EVENT_GRID_WEBHOOK_SECRET;
-
-  if (!webhookSecret) {
-    if (process.env.NODE_ENV !== "production") return true;
-    console.error("[azure-email-webhook] AZURE_EVENT_GRID_WEBHOOK_SECRET is not configured");
-    return false;
-  }
-
-  const url = new URL(request.url);
-  const candidate = request.headers.get("x-webhook-secret") ?? url.searchParams.get("secret");
-
-  return Boolean(candidate && safeEquals(candidate, webhookSecret));
-}
-
-function getMessageId(data: Record<string, unknown>) {
-  return (
-    asString(data.messageId) ??
-    asString(data.operationId) ??
-    asString(data.emailMessageId) ??
-    asString(data.correlationId)
-  );
-}
-
-function getRecipient(data: Record<string, unknown>) {
-  return (
-    asString(data.recipient) ??
-    asString(data.recipientAddress) ??
-    asString(data.to) ??
-    asString(data.email)
-  );
-}
-
-function getEventKind(event: EventGridEvent, data: Record<string, unknown>) {
-  const rawType = event.eventType ?? asString(data.eventType) ?? "UNKNOWN";
-  const trackingType = asString(data.trackingType) ?? asString(data.engagementType) ?? asString(data.type);
-  const deliveryStatus = asString(data.status) ?? asString(data.deliveryStatus);
-
-  if (trackingType) return trackingType.toUpperCase();
-  if (deliveryStatus) return deliveryStatus.toUpperCase();
-  return rawType.replace(/^Microsoft\.Communication\./, "");
-}
-
-function toInputJson(value: unknown): Prisma.InputJsonValue {
-  return JSON.parse(JSON.stringify(value));
-}
-
-export async function POST(request: Request) {
-  if (!isAuthorized(request)) {
+// Azure Event Grid webhook for ACS email events
+// Events: DeliveryReportReceived, EngagementTrackingReportReceived
+export async function POST(req: NextRequest) {
+  const secret = req.nextUrl.searchParams.get("secret");
+  if (secret !== process.env.AZURE_EVENT_GRID_WEBHOOK_SECRET) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch (error) {
-    console.warn("[azure-email-webhook] invalid JSON payload", error);
-    return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
-  }
+  const body = await req.json();
 
-  const events: EventGridEvent[] = Array.isArray(body) ? body : [body as EventGridEvent];
-
-  const validationEvent = events.find((event) => {
-    const data = asRecord(event.data);
-    return event.eventType === "Microsoft.EventGrid.SubscriptionValidationEvent" || asString(data.validationCode);
-  });
-
-  if (validationEvent) {
-    const validationCode = asString(asRecord(validationEvent.data).validationCode);
-    return NextResponse.json({ validationResponse: validationCode });
-  }
+  // Azure sends array of events
+  const events = Array.isArray(body) ? body : [body];
 
   for (const event of events) {
-    const data = asRecord(event.data);
-    const providerEventId = event.id ?? `${event.eventType}:${getMessageId(data)}:${getRecipient(data)}:${event.eventTime}`;
+    // Handle Event Grid subscription validation
+    if (event.eventType === "Microsoft.EventGrid.SubscriptionValidationEvent") {
+      return NextResponse.json({
+        validationResponse: event.data.validationCode,
+      });
+    }
 
-    await prisma.mailEvent.upsert({
-      where: { providerEventId },
-      update: {
-        eventType: getEventKind(event, data),
-        messageId: getMessageId(data),
-        recipient: getRecipient(data),
-        eventTime: event.eventTime ? new Date(event.eventTime) : undefined,
-        payload: toInputJson({ ...event, data }),
-      },
-      create: {
-        providerEventId,
-        eventType: getEventKind(event, data),
-        messageId: getMessageId(data),
-        recipient: getRecipient(data),
-        eventTime: event.eventTime ? new Date(event.eventTime) : undefined,
-        payload: toInputJson({ ...event, data }),
-      },
-    });
+    const eventType: string =
+      event.eventType || event.type || "";
+    const data = event.data || {};
+
+    // ACS email events
+    if (eventType.includes("EmailDeliveryReportReceived") || eventType.includes("DeliveryReport")) {
+      const messageId = data.messageId || data.MessageId;
+      const status = data.status || data.DeliveryStatus;
+      const recipient = data.recipient || data.RecipientAddress;
+
+      if (messageId) {
+        await prisma.outreachContact.updateMany({
+          where: { messageId },
+          data:
+            status === "Delivered"
+              ? { status: "SENT" }
+              : status === "Bounced" || status === "Failed"
+              ? { status: "BOUNCED" }
+              : {},
+        });
+
+        await prisma.outreachEvent.create({
+          data: {
+            contactId: "system",
+            messageId,
+            eventType: status || "DeliveryReport",
+            eventTime: event.eventTime ? new Date(event.eventTime) : new Date(),
+            payload: data,
+          },
+        }).catch(() => {});
+      }
+    }
+
+    // ACS engagement tracking (open/click from Azure side)
+    if (eventType.includes("EngagementTracking")) {
+      const messageId = data.messageId || data.MessageId;
+      const engagementType = data.engagementType || data.EngagementType; // "View" or "Click"
+      const url = data.url || data.Url;
+
+      if (messageId) {
+        const contact = await prisma.outreachContact.findFirst({
+          where: { messageId },
+        });
+
+        if (contact) {
+          const now = new Date();
+          if (engagementType === "View") {
+            await prisma.outreachContact.update({
+              where: { id: contact.id },
+              data: {
+                status: "OPENED",
+                openedAt: contact.openedAt ?? now,
+                openCount: { increment: 1 },
+              },
+            });
+          } else if (engagementType === "Click") {
+            await prisma.outreachContact.update({
+              where: { id: contact.id },
+              data: {
+                status: "CLICKED",
+                clickedAt: contact.clickedAt ?? now,
+                clickCount: { increment: 1 },
+              },
+            });
+          }
+
+          await prisma.outreachEvent.create({
+            data: {
+              contactId: contact.id,
+              messageId,
+              eventType: engagementType === "View" ? "Opened" : "Clicked",
+              linkUrl: url,
+              eventTime: new Date(),
+              payload: data,
+            },
+          });
+        }
+      }
+    }
   }
 
-  return NextResponse.json({ ok: true, received: events.length });
+  return NextResponse.json({ ok: true });
 }
