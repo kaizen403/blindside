@@ -111,5 +111,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/outreach/:path*", "/((?!api/auth|_next/static|_next/image|favicon.ico|public).*)"],
+  matcher: ["/outreach/:path*", "/((?!api/auth|api/webhooks|api/outreach/track|_next/static|_next/image|favicon.ico|public).*)"],
 };
