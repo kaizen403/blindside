@@ -6,14 +6,12 @@ import { sendOutreachEmail } from "@/lib/outreach";
 // Sends to all PENDING contacts in batches
 export async function POST(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const campaign = await prisma.outreachCampaign.findUniqueOrThrow({
-    where: { id: params.id },
-  });
+  const { id } = await params;
 
   const pending = await prisma.outreachContact.findMany({
-    where: { campaignId: params.id, status: "PENDING" },
+    where: { campaignId: id, status: "PENDING" },
   });
 
   if (pending.length === 0) {
@@ -21,7 +19,7 @@ export async function POST(
   }
 
   await prisma.outreachCampaign.update({
-    where: { id: params.id },
+    where: { id },
     data: { status: "SENDING" },
   });
 
@@ -41,7 +39,7 @@ export async function POST(
   }
 
   await prisma.outreachCampaign.update({
-    where: { id: params.id },
+    where: { id },
     data: { status: "SENT" },
   });
 
