@@ -4,23 +4,27 @@ import { prisma } from "@/lib/prisma";
 // Azure Event Grid webhook for ACS email events
 // Events: DeliveryReportReceived, EngagementTrackingReportReceived
 export async function POST(req: NextRequest) {
-  const secret = req.nextUrl.searchParams.get("secret");
-  if (secret !== process.env.AZURE_EVENT_GRID_WEBHOOK_SECRET) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const body = await req.json();
 
   // Azure sends array of events
   const events = Array.isArray(body) ? body : [body];
 
+  // Handle Event Grid subscription validation BEFORE auth check
   for (const event of events) {
-    // Handle Event Grid subscription validation
     if (event.eventType === "Microsoft.EventGrid.SubscriptionValidationEvent") {
       return NextResponse.json({
         validationResponse: event.data.validationCode,
       });
     }
+  }
+
+  // Auth check for all other events
+  const secret = req.nextUrl.searchParams.get("secret");
+  if (secret !== process.env.AZURE_EVENT_GRID_WEBHOOK_SECRET) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  for (const event of events) {
 
     const eventType: string =
       event.eventType || event.type || "";
