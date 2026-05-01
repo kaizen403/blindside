@@ -19,7 +19,7 @@ const footerLinks = [
   {
     heading: "Contact",
     links: [
-      { label: "hello@blindwall.io", href: "mailto:hello@blindwall.io" },
+      { label: "rishi@blindwall.tech", href: "mailto:rishi@blindwall.tech" },
     ],
   },
 ];
