@@ -11,6 +11,7 @@ export type LegalPageProps = {
   lastUpdated: string;
   intro?: string;
   sections: LegalSection[];
+  draftNotice?: string;
 };
 
 export default function LegalPage({
@@ -18,6 +19,7 @@ export default function LegalPage({
   lastUpdated,
   intro,
   sections,
+  draftNotice,
 }: LegalPageProps) {
   return (
     <main className="min-h-screen bg-black text-white">
@@ -49,6 +51,12 @@ export default function LegalPage({
               Privacy
             </Link>
             <Link
+              href="/refund"
+              className="hover:text-white/90 transition-colors"
+            >
+              Refunds
+            </Link>
+            <Link
               href="/"
               className="hover:text-white/90 transition-colors"
             >
@@ -69,6 +77,18 @@ export default function LegalPage({
           <p className="text-sm text-white/40 font-mono mb-12">
             Last updated: {lastUpdated}
           </p>
+
+          {draftNotice ? (
+            <div
+              role="note"
+              className="mb-10 rounded-lg border border-[#dc2626]/30 bg-[#dc2626]/[0.06] px-5 py-4 text-sm text-white/80 leading-relaxed"
+            >
+              <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#dc2626] mr-2">
+                Draft
+              </span>
+              {draftNotice}
+            </div>
+          ) : null}
 
           {intro ? (
             <p className="text-base text-white/70 leading-relaxed mb-12">

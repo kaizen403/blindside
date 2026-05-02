@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   title: "Terms of Service — Blindwall",
   description:
     "Terms of Service for Blindwall — practical security testing for startups and growing businesses.",
+  alternates: {
+    canonical: "https://blindwall.tech/terms",
+  },
 };
 
 export default function TermsPage() {
