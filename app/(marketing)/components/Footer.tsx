@@ -27,6 +27,7 @@ const footerLinks = [
     links: [
       { label: "Terms of Service", href: "/terms" },
       { label: "Privacy Policy", href: "/privacy" },
+      { label: "Refunds", href: "/refund" },
     ],
   },
 ];

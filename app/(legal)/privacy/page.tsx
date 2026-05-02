@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   title: "Privacy Policy — Blindwall",
   description:
     "Privacy Policy for Blindwall — how we collect, use, and protect your information.",
+  alternates: {
+    canonical: "https://blindwall.tech/privacy",
+  },
 };
 
 export default function PrivacyPage() {
