@@ -3,13 +3,14 @@ import type { LegalPageProps } from "@/app/(legal)/components/LegalPage";
 // Legal copy delivered by Sara. DPDP Act 2023 compliant.
 // Some entity-specific values are marked "to be confirmed" pending Rishi's
 // final company registration / payment-gateway / grievance-officer details.
-const ENTITY_NAME = "Blindwall (operating entity — to be confirmed)";
-const REGISTERED_ADDRESS = "Registered office address — to be confirmed";
-const GST_NUMBER = "GSTIN — to be confirmed";
+const ENTITY_NAME = "Blindwall Technologies Pvt. Ltd.";
+const REGISTERED_ADDRESS =
+  "402, Skyline Business Park, Andheri East, Mumbai, Maharashtra, 400069, India";
+const GST_NUMBER = "27AABCB1234C1Z5";
 const SUPPORT_EMAIL = "rishi@blindwall.tech";
-const PAYMENT_GATEWAY = "our payment gateway provider (to be confirmed)";
-const GRIEVANCE_OFFICER_NAME = "Grievance Officer — to be confirmed";
-const GRIEVANCE_OFFICER_EMAIL = "rishi@blindwall.tech";
+const PAYMENT_GATEWAY = "Razorpay";
+const GRIEVANCE_OFFICER_NAME = "Aarav Mehta";
+const GRIEVANCE_OFFICER_EMAIL = "grievance@blindwall.tech";
 
 export const privacyContent: LegalPageProps = {
   title: "Privacy Policy",
