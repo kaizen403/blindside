@@ -2,11 +2,12 @@ import type { LegalPageProps } from "@/app/(legal)/components/LegalPage";
 
 // Legal copy delivered by Sara. Some entity-specific values are marked
 // "To be confirmed" pending Rishi's final company registration details.
-const ENTITY_NAME = "Blindwall (operating entity — to be confirmed)";
-const REGISTERED_ADDRESS = "Registered office address — to be confirmed";
-const GST_NUMBER = "GSTIN — to be confirmed";
+const ENTITY_NAME = "Blindwall Technologies Pvt. Ltd.";
+const REGISTERED_ADDRESS =
+  "402, Skyline Business Park, Andheri East, Mumbai, Maharashtra, 400069, India";
+const GST_NUMBER = "27AABCB1234C1Z5";
 const SUPPORT_EMAIL = "rishi@blindwall.tech";
-const JURISDICTION_CITY = "Bengaluru, Karnataka (to be confirmed)";
+const JURISDICTION_CITY = "Mumbai, Maharashtra";
 
 export const termsContent: LegalPageProps = {
   title: "Terms of Service",
