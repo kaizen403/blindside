@@ -56,15 +56,17 @@ export default function CTA() {
           transition={{ duration: 0.5, delay: 0.15 }}
           className="mb-6"
         >
-          <motion.button
-            type="button"
+          <motion.a
+            href="https://cal.com/rishivhavle/15min"
+            target="_blank"
+            rel="noopener noreferrer"
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
             className="bg-[var(--accent)] text-white rounded-full px-10 py-4 text-base font-semibold cursor-pointer hover:brightness-110 transition"
           >
             Protect My Application for ₹999
-          </motion.button>
+          </motion.a>
         </motion.div>
 
         <motion.p

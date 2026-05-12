@@ -19,7 +19,7 @@ const footerLinks = [
   {
     heading: "Contact",
     links: [
-      { label: "rishi@blindwall.tech", href: "mailto:rishi@blindwall.tech" },
+      { label: "rishi@blindwall.tech", href: "mailto:rishi@blindwall.tech", highlight: true },
     ],
   },
   {
@@ -110,7 +110,7 @@ export default function Footer() {
                   <li key={link.label}>
                     <a
                       href={link.href}
-                      className="text-sm text-white/40 hover:text-white/80 transition-colors duration-300"
+                      className={}
                     >
                       {link.label}
                     </a>
