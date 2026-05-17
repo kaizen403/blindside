@@ -2,17 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { UAParser } from "ua-parser-js";
 
-async function sendTelegram(msg: string) {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_OWNER_CHAT_ID;
-  if (!token || !chatId) return;
-  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text: msg, parse_mode: "HTML" }),
-  }).catch(() => {});
-}
-
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -57,7 +46,7 @@ export async function GET(
     isp = geo.org || null;
   } catch {}
 
-  const hit = await prisma.trackHit.create({
+  await prisma.trackHit.create({
     data: {
       linkId: link.id,
       ip,
@@ -74,19 +63,6 @@ export async function GET(
       referer: req.headers.get("referer") || null,
     },
   });
-
-  // Telegram ping
-  const msg = `🎯 <b>Link clicked:</b> /${slug}${link.label ? ` (${link.label})` : ""}
-
-🌍 <b>Location:</b> ${city || "?"}, ${region || "?"}, ${country || "?"}
-📍 <b>Coords:</b> ${lat ?? "?"}, ${lon ?? "?"}
-🔌 <b>IP:</b> <code>${ip}</code>
-🏢 <b>ISP:</b> ${isp || "?"}
-💻 <b>Device:</b> ${device} | ${browser || "?"} on ${os || "?"}
-🕐 <b>Time:</b> ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}
-${lat && lon ? `\n🗺 https://maps.google.com/?q=${lat},${lon}` : ""}`;
-
-  await sendTelegram(msg);
 
   return NextResponse.redirect(link.redirectUrl);
 }
