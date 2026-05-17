@@ -107,15 +107,12 @@ export default function Hero() {
             >
               <motion.button
                 type="button"
-                href="https://cal.com/rishivhavle/15min"
-                target="_blank"
-                rel="noopener noreferrer"
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 className="bg-[var(--accent)] text-white rounded-full px-8 sm:px-12 py-4 text-base sm:text-lg font-semibold cursor-pointer hover:brightness-110 transition-all shadow-[0_0_30px_rgba(220,38,38,0.3)]"
               >
                 Get Protected for <span className="text-xl font-bold">₹999</span>
-              </motion.a>
+              </motion.button>
 
               <p className="text-[13px] text-white/30">
                 For startups, small businesses, and growing teams.

@@ -394,3 +394,36 @@ model OutreachEvent {
   @@index([messageId])
   @@map("outreach_event")
 }
+
+model TrackLink {
+  id          String     @id @default(cuid())
+  slug        String     @unique
+  label       String?
+  redirectUrl String     @default("https://blindwall.tech")
+  createdAt   DateTime   @default(now())
+  hits        TrackHit[]
+
+  @@map("track_link")
+}
+
+model TrackHit {
+  id        String    @id @default(cuid())
+  linkId    String
+  link      TrackLink @relation(fields: [linkId], references: [id])
+  ip        String?
+  city      String?
+  region    String?
+  country   String?
+  lat       Float?
+  lon       Float?
+  isp       String?
+  userAgent String?
+  device    String?
+  browser   String?
+  os        String?
+  referer   String?
+  createdAt DateTime  @default(now())
+
+  @@index([linkId])
+  @@map("track_hit")
+}
