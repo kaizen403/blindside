@@ -64,6 +64,28 @@ export default function Hero() {
           className="flex-1 flex flex-col justify-center items-center px-5 pb-24 sm:pb-32"
         >
           <div className="max-w-4xl text-center px-2" style={{ perspective: 600 }}>
+            <motion.div
+              custom={0.6}
+              initial="hidden"
+              animate="visible"
+              variants={fadeUp}
+              className="flex justify-center mb-8"
+            >
+              <a
+                href="https://www.ycombinator.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/[0.07] border border-white/[0.12] backdrop-blur-sm hover:bg-white/[0.12] transition-colors"
+              >
+                <span className="text-white/60 text-sm font-medium tracking-wide">BACKED BY</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
+                  <rect width="24" height="24" rx="4" fill="#FF6600"/>
+                  <path d="M6 18L10 6H13L17 18H14.5L13.7 15.5H9.3L8.5 18H6ZM10 13.5H13L11.5 9L10 13.5Z" fill="white"/>
+                </svg>
+                <span className="text-white/90 text-sm font-semibold tracking-wide">COMBINATOR</span>
+              </a>
+            </motion.div>
+
             <h1 className="text-[clamp(2rem,6vw,4.5rem)] font-medium tracking-[-0.04em] leading-[1.1] mb-6 flex flex-wrap justify-center gap-x-[0.3em]">
               {HEADING_WORDS.map((word, i) => (
                 <motion.span
