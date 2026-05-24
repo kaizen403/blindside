@@ -80,7 +80,7 @@ export default function Hero() {
                 <span className="text-white/60 text-sm font-medium tracking-wide">BACKED BY</span>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
                   <rect width="24" height="24" rx="4" fill="#FF6600"/>
-                  <path d="M6 18L10 6H13L17 18H14.5L13.7 15.5H9.3L8.5 18H6ZM10 13.5H13L11.5 9L10 13.5Z" fill="white"/>
+                  <text x="12" y="17" textAnchor="middle" fill="white" fontSize="14" fontWeight="700" fontFamily="system-ui, -apple-system, sans-serif">Y</text>
                 </svg>
                 <span className="text-white/90 text-sm font-semibold tracking-wide">COMBINATOR</span>
               </a>
